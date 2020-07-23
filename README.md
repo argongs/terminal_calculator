@@ -21,9 +21,9 @@ OPTIONS
 * -m    Perform multiplication.
 
 INPUT
-- Numbers seperated by space. 
+- Numbers seperated by space.   
   Example : 1 2.3 3.45 4.567 5.678
-- Do NOT enter negative numbers, as currently the program isn't capable of accepting negative numbers while performing direct addition/multiplication via the options
+- Do NOT enter negative numbers, as currently the program isn't capable of accepting negative numbers while performing direct addition/multiplication via the options.   
   Example : -4 -5.3
 	
 EXPRESSION
