@@ -1,6 +1,9 @@
 #Program files
 expression_evaluator.c
 
+#Text files
+*.txt
+
 #Temporary files
 *.*~
 *~
