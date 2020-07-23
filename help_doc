@@ -1,6 +1,6 @@
-1.	calc [options] [positive real nos seperated by <space>]
-2.	calc [mathematical expression]
-3.	calc [about]
+1.	eval [options] [positive real nos seperated by <space>]
+2.	eval [mathematical expression]
+3.	eval [about]
 
 [options]:
 	-a	Perform addition.
