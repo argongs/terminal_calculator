@@ -6,7 +6,7 @@
 #include <math.h>
 
 #define SYMBOL_COUNT 9
-
+#define MAX_PRECISION 6
 
 struct symbol_struct
 {
@@ -26,12 +26,18 @@ const struct symbol_struct symbol_list[] = {
 	{'#', -4, 3, 0}//---|
 };
 
+struct number
+{
+	float value;
+	int precision;
+};
+
 struct element
 {
 	//to hold either an operator or an operand
 	union data_type
 	{
-		float operand;
+		struct number operand;
 		char operator;
 	}type;
 	
@@ -51,15 +57,15 @@ struct stack
 	int max_len, top;
 };
 
-int eval_expr(char*, float*);
+int eval_expr(char*, struct number*);
 
 int infix_to_postfix(char*, struct element*, int);
-int postfix_eval(struct element*, int, float*);
+int postfix_eval(struct element*, int, struct number*);
 
 int compare(char, char);
 int check_safety(char*, int);
 int is_valid_operator(char);
-int calculate(char, float*, int, float*);
+int calculate(char, struct number*, int, struct number*);
 int obtain_ary(char);
 int obtain_precedence(char);
 
@@ -73,7 +79,7 @@ void release_stack(struct stack*);
 int push(struct stack*, struct element);
 struct element pop(struct stack*);
 
-int eval_expr(char* expression, float* result)
+int eval_expr(char* expression, struct number* result)
 {
 	int expr_length = strlen(expression);
 	int infix_eval_status = 0, postfix_eval_status = 0; 
@@ -99,12 +105,19 @@ int eval_expr(char* expression, float* result)
 					case	1	:	// flawless result
 						//printf("[info] Evaluated value : %f\n", result);
 						break;
+					
 					case	0	:	// lack of memory
 						fprintf(stderr, "[error] Couldn't allocate memory for evaluation of the postfix expression due to lack of memory\n");
 						break;
+					
 					case	-1	:	// incorrect postfix expression
 						fprintf(stderr, "[error] Incorrect postfix expression was given for evaluation.\n");
 						break;
+					
+					case	-2	:	//	not defined result
+						fprintf(stderr, "[error] Result is not defined for such expressions.\n");
+						break;
+						
 					default		:
 						fprintf(stderr, "[error] Unexpected behaviour detected from 'postfix_eval()' funxn.\n");
 				}
@@ -125,12 +138,14 @@ int eval_expr(char* expression, float* result)
 	
 	free_element_list(postfix_expr);
 		
-	return infix_eval_status;
+	return infix_eval_status + postfix_eval_status; 
+	//iff the sum of (infix_eval_status + postfix_eval_status) is 2, 
+	//can we say that the result is flawless. Otherwise, there might have been some issue in the expression OR a possible lack of memory
 }
 
 int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 {
-	int i = 0, j = 0, next_index = 0;
+	int i = 0, j = 0, next_index = 0, return_value = 1;
 	struct stack item_stack;
 	struct element data, temp;
 	
@@ -144,15 +159,41 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 			//Push every '(' encountered in the infix expression to the stack
 			if(infix_expr[i] == '(')
 			{	
-				//Try to push '(' onto the stack. If the stack is full 
-				//then stack overflow is imminent. Otherwise, no issues.
-				temp.type.operator = '(';
-				temp.is_operator = -1;
-				
-				if( !push(&item_stack, temp) )
+				/*
+				Prior to pushing '(' onto the stack check whether the symbol present 
+				prior to ')' is an operator OR not. If it ain't an operator, then it's
+				an invalid expression. For instance, consider the following:
+				Index	i-1	i ---\ This is an incorrect expression since it contains
+				Symbol	5	( ---/ '5('. Why incorrect? Because there's no operator
+									present in b/w. '5' and '(', so basically the expression
+									present after '(' cannot be operated with the expression
+									that is present prior to '(' and whose last symbol is '5'.
+				However, if the paranthesis is present right in the beginning of the expression
+				then there's no meaning in checking the symbol present right before it. 
+				Therefore, whenever an '(' is discovered then it should be present after the index 1
+				along with an operator present before it OR it should be the first symbol in the expression.
+				*/
+				bool operator_present = (is_valid_operator(infix_expr[i-1]) && i > 1);
+				bool nested_paranthesis = (infix_expr[i-1] == '(' && i > 0); 
+				if( operator_present || nested_paranthesis || i == 0 ) 
 				{
-					fprintf(stderr, "[error] Stack Overflow! Can't push anymore.\n");
-					return 0;
+					//Try to push '(' onto the stack. If the stack is full 
+					//then stack overflow is imminent. Otherwise, no issues.
+					temp.type.operator = '(';
+					temp.is_operator = -1;
+					
+					if( !push(&item_stack, temp) )
+					{
+						fprintf(stderr, "[error] Stack Overflow! Can't push anymore.\n");
+						return_value = 0;
+						break;
+					}
+				}
+				else
+				{
+					fprintf(stderr, "[error] Detected lack of operator prior to the opening paranthesis\n");
+					return_value = -1;
+					break;
 				}
 			}
 			//Every time a ')' is dicovered then keep on popping until 
@@ -160,34 +201,52 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 			else if(infix_expr[i] == ')')
 			{
 				//To check if the user has entered empty paranthesis '()' in the expression 
-				if(item_stack.element_list[item_stack.top].is_operator == -1 && item_stack.element_list[item_stack.top].type.operator == '(')
+				if(infix_expr[i-1] == '(')
 				{
 					//If the user has entered empty paranthesis than stop evaluation
 					fprintf(stderr, "[error] Detected presence of empty paranthesis i.e. '()' in the infix expression. Empty paranthesis can't be evaluated\n");
-					return -1;
+					return_value = -1;
+					break;
 				}
-				/*
-				Discovery of :
-				'(' implies correct paranthesis usage in infix expression 
-				'$' implies incorrect paranthesis usage in infix expression
-				Hence, if incorrect paranthesis usage is detected then return
-				'-1', in order to indicate the existence of this issue.
-				*/
-				//Weirdest for loop created by us
-				//	Intialise 'temp'---------->Check contents of 'temp'---->Update 'temp' at the end of every iteration 
-				for( temp = pop(&item_stack) ; temp.type.operator != '('; temp = pop(&item_stack) )
+				
+				//To check if there's a valid symbol present after ')'. Note that after ')',
+				//either there'll be an operator OR a ')' OR '\0'.
+				bool end_of_expression = infix_expr[i+1] == '\0';
+				bool operator_present = is_valid_operator(infix_expr[i+1]) && !end_of_expression;
+				bool nested_paranthesis = infix_expr[i+1] == ')' && !end_of_expression;
+				
+				if( operator_present || nested_paranthesis || end_of_expression) 
 				{
-					if(temp.type.operator == '$')
+					/*
+					Discovery of :
+					'(' implies correct paranthesis usage in infix expression 
+					'$' implies incorrect paranthesis usage in infix expression
+					Hence, if incorrect paranthesis usage is detected then return
+					'-1', in order to indicate the existence of this issue.
+					*/
+					//Weirdest for loop created by us
+					//	Intialise 'temp'---------->Check contents of 'temp'---->Update 'temp' at the end of every iteration 
+					for( temp = pop(&item_stack) ; temp.type.operator != '('; temp = pop(&item_stack) )
 					{
-						fprintf(stderr, "[error] Detected incorrect usage of paranthesis in the infix expression.\n");
-						return -1;
+						if(temp.type.operator == '$')
+						{
+							fprintf(stderr, "[error] Detected incorrect usage of paranthesis in the infix expression.\n");
+							return_value = -1;
+							break;
+						}
+						else
+						{
+							//printf("[info] Popped item : %c\n", temp);
+							postfix_expr[j] = temp;
+							j++;
+						}
 					}
-					else
-					{
-						//printf("[info] Popped item : %c\n", temp);
-						postfix_expr[j] = temp;
-						j++;
-					}
+				}
+				else 
+				{
+					fprintf(stderr, "[error] Detected incorrect symbol after the closing paranthesis\n");
+					return_value = -1;
+					break;
 				}
 			}
 			else
@@ -197,7 +256,8 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 				if( next_index == 0 )
 				{
 					fprintf(stderr, "[error] Detected illegal symbol in the infix expression.\n");
-					return -1; //the detected illegal symbol : '\0'
+					return_value = -1; //the detected illegal symbol : '\0'
+					break;
 				}
 				else if( next_index > 0 ) //discovered an operator OR an operand
 				{
@@ -218,7 +278,8 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 									if(	!push(&item_stack, data) )
 									{
 										fprintf(stderr, "[error] Stack Overflow! Can't push anymore.\n");
-										return 0;
+										return_value = 0;
+										break;
 									}	
 									break;
 										
@@ -226,8 +287,9 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 								case 1	:	
 									if( item_stack.top < 0 )
 									{	
-										fprintf(stderr, "[error] Detected incorrect usage of operators in the infix expression.\n");
-										return -1; //incorrect usage of symbols
+										fprintf(stderr, "[error] Detected incorrect usage of operators in the infix expression.\n"); 
+										return_value = -1; //incorrect usage of symbols
+										break;
 									}
 									else
 									{	
@@ -246,13 +308,14 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 						}
 						else //incorrect usage of operators
 						{
-							return -1;
+							return_value = -1;
+							break;
 						}
 					}
 					else //if discovered a no.
 					{
 						//postfix_expr[j].is_operator = 0;
-						//postfix_expr[j].type.operand = data.type.operand;
+						//postfix_expr[j].type.operand.value = data.type.operand.value;
 						postfix_expr[j] = data;
 						j++;
 					}
@@ -270,7 +333,8 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 				else //discovered erroraneous expression
 				{
 					fprintf(stderr, "[error] Detected incorrect usage of operators in the infix expression.\n");
-					return -1;
+					return_value = -1;
+					break;
 				}
 			}	
 			i++;
@@ -288,14 +352,14 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 		}		
 		
 		release_stack(&item_stack);
-		return 1;
+		return return_value;
 	}
 	else
 		return 0;
 }
 
 //Postfix evaluator
-int postfix_eval(struct element* postfix_expr, int length, float *result)
+int postfix_eval(struct element* postfix_expr, int length, struct number *result)
 {
 	int i = 0, j = 0, return_value = 1;
 	char operand, operator;
@@ -318,7 +382,7 @@ int postfix_eval(struct element* postfix_expr, int length, float *result)
 				//items in it.
 				if(item_stack.top - ary >= 0)  
 				{
-					float operands[ary]; //create an array for holding 'ary' operands
+					struct number operands[ary]; //create an array for holding 'ary' operands
 					//Pop 'ary' 'elements' from the stack and add it to the above array iff that 'element' is an operand.
 					for (j = 0; j < ary; j += 1)
 					{
@@ -337,12 +401,17 @@ int postfix_eval(struct element* postfix_expr, int length, float *result)
 					//If the postfix expression was not found to be faulty during the above scan, then evaluate the recently scanned 'operator' from the postfix expression by making use of the above operand array 
 					if(return_value != -1)
 					{
-						float value = 0;
+						struct number value = {0, 0};
 						int operation_status = calculate(postfix_expr[i].type.operator, operands, ary, &value);
 						//Check if the operation was performed successfully
-						if(operation_status == 0)
+						if( operation_status == 0 )
 						{	
 							return_value = -1; //incorrect postfix expression, since the operation cannot be performed
+							break;
+						}
+						else if( operation_status == -1 )
+						{
+							return_value = -2; //evaluation cannot be performed, since the result for such expression is not defined
 							break;
 						}
 						else
@@ -391,17 +460,17 @@ int postfix_eval(struct element* postfix_expr, int length, float *result)
 		
 		//After scanning the entire postfix expression, 
 		//if the stack top holds an operand
-		if( item_stack.element_list[item_stack.top].is_operator == 0)
+		if( item_stack.element_list[item_stack.top].is_operator == 0 && return_value == 1 )
 		{
 			//then copy the stack top value onto the 'result' variable
 			*result = item_stack.element_list[item_stack.top].type.operand;
-			return_value = 1;
+			//return_value = 1;
 		}
-		else 
+		/*else if( return_value != -2) //if it ain't mathematical error (not defined type of expressions) then enter here
 		{	
 			//otherwise, the postfix expression was incorrect
 			return_value = -1;
-		}
+		}*/
 	}
 	else
 	{	
@@ -469,7 +538,7 @@ int compare(char a, char b)
 //Parse the element at index 'i' of the 'infix_expr'
 int parse_element(char *infix_expr, int i, struct element* data)
 {
-	int initial_i = i, final_i;
+	int initial_i = i, final_i, decimal_index = 0;
 	//if the scanned charachter is:
 	//-> a string terminator, then parsing can't be done 
 	if(infix_expr[i] == '\0')
@@ -503,7 +572,10 @@ int parse_element(char *infix_expr, int i, struct element* data)
 			else if( infix_expr[i] == '.' )
 			{	
 				if( isdigit(infix_expr[i+1]) )
+				{
+					decimal_index = i; //storing the index at which '.' was found in order to calculate the precision of the no.
 					i += 2;
+				}
 				else
 					return -1; //erroraneous expression
 			}
@@ -517,8 +589,12 @@ int parse_element(char *infix_expr, int i, struct element* data)
 		final_i = i;
 		char *no_string = strndup(infix_expr + initial_i, (final_i - initial_i)*sizeof(char));
 		//parse the scanned no. into a floating point no.
-		sscanf(no_string, "%f", &(data->type.operand));
-		//printf("[info] Extracted no. : %f\n", data->type.operand);
+		sscanf(no_string, "%f", &(data->type.operand.value));
+		if( decimal_index )
+			data->type.operand.precision = final_i - decimal_index;
+		else
+			data->type.operand.precision = 0;
+		//printf("[info] Extracted no. : %f\n", data->type.operand.value);
 		data->is_operator = 0;
 		
 		return final_i;
@@ -529,14 +605,16 @@ int parse_element(char *infix_expr, int i, struct element* data)
 		switch( infix_expr[i] )
 		{
 			case	'e'	: //for handling euler's constant
-				data->type.operand = M_E;
+				data->type.operand.value = M_E;
+				data->type.operand.precision = MAX_PRECISION;
 				data->is_operator = 0;
 				return i+1; //return next_index to evaluate
 				//break;
 			case	'p' : //for handling the 'pi'
 				if( infix_expr[i+1] == 'i')
 				{
-					data->type.operand = M_PI;
+					data->type.operand.value = M_PI;
+					data->type.operand.precision = MAX_PRECISION;
 					data->is_operator = 0;
 					return i+2; //return next_index to evaluate
 					//break;
@@ -595,8 +673,8 @@ int obtain_precedence(char operator)
 	return -1;
 }
 
-//Calculate and return operands[1] operator operands[1] 
-int calculate(char operator, float *operands, int ary, float *result)
+//Calculate and return operands[1] operator operands[0] 
+int calculate(char operator, struct number *operands, int ary, struct number *result)
 {
 	int return_value = 1;
 	
@@ -606,24 +684,78 @@ int calculate(char operator, float *operands, int ary, float *result)
 			switch( operator )
 			{
 				case	'-'	:	
-					*result = operands[1]-operands[0];
+					result->value = operands[1].value - operands[0].value;
+					//Adjust precision of the result
+					//In case of addition the precision, of the result will be the same as that of the operand with highest precision
+					if( operands[1].precision > operands[0].precision )
+						result->precision = operands[1].precision;
+					else 
+						result->precision = operands[0].precision;
 					break;
+					
 				case	'+'	:
-					*result = operands[1]+operands[0];
+					result->value = operands[1].value + operands[0].value;
+					//Adjust precision of the result
+					//In case of subtraction, the precision of the result will be the same as that of the operand with highest precision
+					if( operands[1].precision > operands[0].precision )
+						result->precision = operands[1].precision;
+					else 
+						result->precision = operands[0].precision;
 					break;
+					
 				case	'*'	:
-					*result = operands[1]*operands[0];
+					result->value = operands[1].value*operands[0].value;
+					//Adjust precision of the result
+					//In case of multiplication, the precision of the result will be set to the sum of precision of both the operands. i.e. If operand 1's precision is 'a' and operand 2's precision is 'b' then the precision of the result will be set to 'a+b' 
+					result->precision = operands[1].precision + operands[0].precision;
 					break;
+					
 				case	'/'	:
-					*result = operands[1]/operands[0];
+					
+					if(operands[0].value == 0)
+					{
+						fprintf(stderr, "[error] Cannot divide by 0.\n");
+						return_value = -1; //Not defined result
+					}
+					else
+					{
+					
+						result->value = operands[1].value/operands[0].value;
+						//Adjust precision of the result
+						//In case of division, the precision of the result will be set to the difference of precision of both the operands. i.e. If operand 1's precision is 'a' and operand 2's precision is 'b' then the precision of the result will be set to '|a-b|' 
+						if( operands[1].precision > operands[0].precision )
+							result->precision = operands[1].precision - operands[0].precision;
+						else 
+							result->precision = operands[0].precision - operands[1].precision;
+					}
+					
 					break;
+				
 				case	'^'	:
-					*result = powf(operands[1], operands[0]); //operands[1]^operands[0]
+				
+					if(operands[0].value == 0 && operands[1].value == 0)
+					{
+						fprintf(stderr, "[error] Cannot perform 0^0.\n");
+						return_value = -1; //Not defined result
+					}
+					else
+					{
+						result->value = powf(operands[1].value, operands[0].value); //operands[1]^operands[0]
+					//Adjust precision of the result
+						if( operands[0].precision == 0 && operands[1].precision == 0 )
+							result->precision = 0;
+						else
+							result->precision = MAX_PRECISION;
+					}
 					break;
+				
 				default :
 					return_value = 0;
 			}
+			if(result->precision > MAX_PRECISION)
+				result->precision = MAX_PRECISION;
 			break;
+		
 		default		:
 			return_value = 0;
 	}
@@ -716,10 +848,10 @@ void display_elements(struct element* element_list, int length)
 			we need to type cast the result of product(no. to display * 10) 
 			to integer, prior to applying '%' operation on it 
 			*/
-			if( ((int)element_list[i].type.operand*10)%10 == 0 )
-				printf("%d ", (int)element_list[i].type.operand);
+			if( ((int)element_list[i].type.operand.value*10)%10 == 0 )
+				printf("%d ", (int)element_list[i].type.operand.value);
 			else
-				printf("%f ", element_list[i].type.operand);
+				printf("%f ", element_list[i].type.operand.value);
 		}
 		i++;
 	}
@@ -794,7 +926,7 @@ int push(struct stack* item_stack, struct element data)
 	}
 	else
 	{
-		item_stack->element_list[item_stack->top].type.operand = data.type.operand;
+		item_stack->element_list[item_stack->top].type.operand.value = data.type.operand.value;
 		item_stack->element_list[item_stack->top].is_operator = 0;
 	}
 	

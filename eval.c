@@ -75,10 +75,10 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			float result = 0;
+			struct number result = {0, 0};
 			int eval_status = eval_expr(argv[1], &result);
-			if(eval_status == 1)
-				printf("[info] Result : %.3f\n", result);
+			if(eval_status == 2)
+				printf("[info] Result : %.3f\n", result.value);
 			else
 				printf("[info] Couldn't evaluate the expression\n");
 		}
