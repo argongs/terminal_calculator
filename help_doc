@@ -1,6 +1,6 @@
-1.	eval [options] [positive real nos seperated by <space>]
-2.	eval [mathematical expression]
-3.	eval [about]
+1.	.\compute [options] [positive real nos seperated by <space>]
+2.	.\compute [mathematical expression]
+3.	.\compute [about]
 
 [options]:
 	-a	Perform addition.
