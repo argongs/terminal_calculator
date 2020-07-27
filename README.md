@@ -3,17 +3,17 @@ terminal_calculator, version 1.0.0
 This program is capable of handling simple mathematical expressions. The term 'simple mathematical expressions' written above refers to mathematical expressions 
 that can be created by using real nos. and the following operators : " - + * / ^ ". Parantheses are also supported by this program.
 
-Now let's see how you can make use of this program. The *eval* file is execution ready for debian-based systems. In case if you wish to compile it on your machine, then simply hit the following command on your terminal(for \*nix type systems) OR command line (for windows) :
+Now let's see how you can make use of this program. The *compute* file is execution ready for debian-based systems. In case if you wish to compile it on your machine, then simply hit the following command on your terminal(for \*nix type systems) OR command line (for windows) :
 
-`gcc eval.c -o eval -lm`
+`gcc compute.c -o compute -lm`
 
-Note that you need to have [gcc](https://gcc.gnu.org/) OR some other C compiler installed on your system in order to compile the above mentioned program. Also note the presence of the '-lm' flag at the end. It ensures that the 'math.h' library is linked to the 'eval.c' program. For more info check out [this](https://stackoverflow.com/questions/1033898/why-do-you-have-to-link-the-math-library-in-c) Stack Overflow question. 
+Note that you need to have [gcc](https://gcc.gnu.org/) OR some other C compiler installed on your system in order to compile the above mentioned program. Also note the presence of the '-lm' flag at the end. It ensures that the 'math.h' library is linked to the 'compute.c' program. For more info check out [this](https://stackoverflow.com/questions/1033898/why-do-you-have-to-link-the-math-library-in-c) Stack Overflow question. 
 
 Now let's see how to use the executable file :
 
-- .\eval OPTIONS INPUT
-- .\eval EXPRESSION
-- .\eval ABOUT
+- .\compute OPTIONS INPUT
+- .\compute EXPRESSION
+- .\compute ABOUT
 
 OPTIONS
 
