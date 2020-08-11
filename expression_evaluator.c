@@ -13,6 +13,7 @@ const struct symbol_struct symbol_list[] = {
 	{'*', 1, 2, 3},//	|--> Binary Operators	
 	{'/', 1, 2, 4},//	|	
 	{'^', 1, 2, 5},//---|
+	
 	{'(', -1, 2, 0},//--|
 	{')', -2, 2, 0},//	|--> Special symbols used in various phases of
 	{'$', -3, 2, 0},//	|	 expression of evaluation
@@ -22,7 +23,7 @@ const struct symbol_struct symbol_list[] = {
 int eval_expr(char* expression, struct number* result)
 {
 	int expr_length = strlen(expression);
-	int infix_eval_status = 0, postfix_eval_status = 0; 
+	int infix_eval_status = 0, postfix_eval_status = 0;
 	
 	//printf("[info] Infix Expression : %s\n", expression);
 		
@@ -531,7 +532,12 @@ int parse_element(char *infix_expr, int i, struct element* data)
 		//parse the scanned no. into a floating point no.
 		sscanf(no_string, "%f", &(data->type.operand.value));
 		if( decimal_index )
-			data->type.operand.precision = final_i - decimal_index;
+			data->type.operand.precision = final_i - decimal_index - 1;
+		//Why final_i - decimal_index - 1 and not final_i - decimal_index?
+		//Consider the following example
+		//Index		0 1 2 3 4 
+		//Element   9 . 8 7 6
+		//At the end of the loop, the 'final_i' will hold 5, based on the above logic. And the value of 'decimal_index' will be 1. Now, there are 3 digits after the decimal point in 9.876. However, computing 'final_i - decimal_index' will yield 4. Hence, we subtract 1 from this result in order to get the appropriate no. of digits after the decimal point. Hence, final_i - decimal_index - 1 is used
 		else
 			data->type.operand.precision = 0;
 		//printf("[info] Extracted no. : %f\n", data->type.operand.value);
@@ -662,11 +668,16 @@ int calculate(char operator, struct number *operands, int ary, struct number *re
 					
 						result->value = operands[1].value/operands[0].value;
 						//Adjust precision of the result
-						//In case of division, the precision of the result will be set to the difference of precision of both the operands. i.e. If operand 1's precision is 'a' and operand 2's precision is 'b' then the precision of the result will be set to '|a-b|' 
-						if( operands[1].precision > operands[0].precision )
-							result->precision = operands[1].precision - operands[0].precision;
+						//In case of division, the precision of the result will be set to 0 if the resulting division operation leads to 0 remainder. Otherwise, the precision will be set to max possible value. 
+						if( operands[0].precision == 0 && operands[1].precision == 0 )
+						{	
+							if( (int)operands[1].value %  (int)operands[0].value == 0)
+								result->precision = 0;
+							else
+								result->precision = MAX_PRECISION;
+						}
 						else 
-							result->precision = operands[0].precision - operands[1].precision;
+							result->precision = MAX_PRECISION;
 					}
 					
 					break;
@@ -867,6 +878,7 @@ int push(struct stack* item_stack, struct element data)
 	else
 	{
 		item_stack->element_list[item_stack->top].type.operand.value = data.type.operand.value;
+		item_stack->element_list[item_stack->top].type.operand.precision = data.type.operand.precision;
 		item_stack->element_list[item_stack->top].is_operator = 0;
 	}
 	

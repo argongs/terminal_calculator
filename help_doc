@@ -9,13 +9,13 @@
 [mathematical expression]:
 	-Supported operators : + - * / ^
 	Examples:
-	1+2		1+2*3 
+	1+2, 1+2*3 
 	-Paranthesis is allowed. Use it as much as you want. However
 	enclose the expression in quotes i.e. '', if you wish to make use 
 	of the paranthesis.
 	Examples:
-	Allowed - '(1+2)'	'(1+2)*3'
-	Not allowed - (1+2)		(1+2)*3
+	Allowed - '(1+2)', '(1+2)*3'
+	Not allowed - (1+2), (1+2)*3
 	-Note that the operators will be evaluated according to the following 
 	precedence rule (high to low):
 	Paranthesis > Exponential > Division > Multiplication > Addition > Subtraction
@@ -23,7 +23,7 @@
 	Euler's constant can be used by making use of 'e' in the expression and Pi
 	can be used by making use of 'pi' in the expression
 	Examples:
-	1+e		e*pi	(e+pi)*90
+	1+e, e*pi, (e+pi)*90
 	
 [about]:
 	-h	Obtain the usage section and other helpful examples

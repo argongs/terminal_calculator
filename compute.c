@@ -7,36 +7,45 @@ A major limitation : The -a and -m flags DO NOT accept negative nos.
 //C POSIX libraries
 #include <unistd.h> //for parsing the input options 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
+
 
 //Macros
 #define MAXLINE 1000 //maximum line length for a line read from a file
 
+#define PROGRAM_NAME "compute"
+#define VERSION "1.0.1"
+
 //Funxn prototype area 
 
 int eval_opt(int, char* [], int*, int*);
-float calc_value(int, char* [], int);
+int calc_value(int, char* [], struct number*, int);
+int obtain_precision(char*);
 int display_usage(void);
 
 //argc : argument count | argv : argument vector
 int main(int argc, char *argv[])
 {
 	//Display the input given
+	/*
 	printf("[info] Input Command :\t'");
 	for (int i = 1; i < argc; i += 1)
 	{
 		printf("%s ", argv[i]);
 	}
 	printf("'\n");
+	*/
 	
 	//printf("[info] Initially argc = %d and argv[0] = %s\n", argc, argv[0]);
 	
 	int option_index = 0, user_opt = 0;
 	
-	if( eval_opt(argc, argv, &option_index, &user_opt) )
+	if( eval_opt(argc, argv, &option_index, &user_opt) || argc < 2)
 	{
 		printf("[error] Incorrect usage detected.\n");
-		printf("[....] Lemme show you how to use me mate.\n");
+		printf("[.....] Lemme show you how to use me mate.\n");
 		//printf("[info] Reached here with %d....\n", display_usage());
 		
 		if( display_usage() )
@@ -55,23 +64,30 @@ int main(int argc, char *argv[])
 				argc -= option_index;
 				argv += option_index;	
 				
-				float value = calc_value(argc, argv, user_opt);
-				//Send the input expression for evaluation and print the results
-				printf("[info] Result : %.3f\n", value);//);
+				struct number result = {0,0};
+				//Send the input expression for evaluation and print the results,
+				//if the calculation has happened flawlessly
+				if( calc_value(argc, argv, &result, user_opt) )
+					printf("[info] Result : %.*f\n", result.precision, result.value);//);
 			}
 			else //for showing help, version etc. info
 			{
 				switch(user_opt)
 				{
-					case 3	:	printf("[info] Usage of 'calc':\n");
-										if( display_usage() )
-										{
-											printf("[error] Can't fetch the help document due to lack of memory. Retry after sometime\n");
-										}
-										break;
-					case 4	:	printf("[info] calc version 1.0\n");
-										break;
-					default	: printf("[error] Obtained user option is beyond expectations. Can't process it. Evacuating with immediate effect.\n");
+					case 3	:	
+						printf("[info] Usage of 'compute':\n");
+						if( display_usage() )
+						{
+							printf("[error] Can't fetch the help document due to lack of memory. Retry after sometime\n");
+						}
+						break;
+						
+					case 4	:	
+						printf("[info] %s version %s\n", PROGRAM_NAME, VERSION);
+						break;
+						
+					default	: 
+						printf("[error] Obtained user option is beyond expectations. Can't process it. Evacuating with immediate effect.\n");
 				}
 			}
 		}
@@ -80,7 +96,17 @@ int main(int argc, char *argv[])
 			struct number result = {0, 0};
 			int eval_status = eval_expr(argv[1], &result);
 			if(eval_status == 2)
-				printf("[info] Result : %.3f\n", result.value);
+				printf("[info] Result : %.*f\n", result.precision, result.value);
+				//Note that usage of '*' in '.*f' allows us to make use of variable
+				//precision value. For instance, via this method we can display
+				//5.653 as 5.6 OR 5.65 OR 5.653, depending upon the value of precision we provide.
+				//How do we supply the value of precision?
+				//By placing an integer value (which will hold the precision value)
+				//which immdiately after the string provided to printf.
+				//i.e. 				
+				//printf("%.*f", precision, float_value);
+				//					^			^
+				//precision value---|			|--float value to display
 			else
 				printf("[info] Couldn't evaluate the expression\n");
 		}
@@ -162,58 +188,72 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 		
 		switch(scanned_option)
 		{
-			case 'a':	if(option_no == 0)
-						{	
-							//printf("[info] Add!\n");
-							option_no = 1; 
-							//Setting option_no to '1' indicates that
-							//'add' option has been selected
-						}
-						else
-							err_flg++;
-						/*
-						If the option 'm' is detected along with 'a',
-						then it's an error. Hence the error flag is incremented over here.
-						*/
-						break;
-			case 'm':	if(option_no == 0)
-						{	
-							//printf("[info] Mul!\n");
-							option_no = 2; 
-							//Setting option_no to '1' indicates that
-							//'multiply' option has been selected
-						}
-						else
-							err_flg++;
-						/*
-						If the option 'a' is detected along with 'm',
-						then it's an error. Hence the error flag is incremented over here.
-						*/
-						break;
-			case 'h':	if(option_no == 0)
-						{	
-							//printf("[info] Help!\n");
-							option_no = 3; 
-							//Setting option_no to '3' indicates that
-							//'help' option has been selected
-						}
-						else
-							err_flg++;
-						break;
-			case 'v':	if(option_no == 0)
-						{	
-							//printf("[info] Version!\n");
-							option_no = 4; 
-							//Setting option_no to '4' indicates that
-							//'version' option has been selected
-						}
-						else
-							err_flg++;
-						break;
-			case '?':	printf("[error] I can't recognise '%c' option\n", optopt);
-						err_flg++;
-						break;
-			default	:	printf("[info] Now this is some out of the world return value. Can't deal with this. Goodbye!\n");
+			case 'a':	
+				if(option_no == 0)
+				{	
+					//printf("[info] Add!\n");
+					option_no = 1; 
+					//Setting option_no to '1' indicates that
+					//'add' option has been selected
+				}
+				else
+					err_flg++;
+				/*
+				If the option 'm' is detected along with 'a',
+				then it's an error. Hence the error flag is incremented over here.
+				*/
+				break;
+				
+			case 'm':	
+				if(option_no == 0)
+				{	
+					//printf("[info] Mul!\n");
+					option_no = 2; 
+					//Setting option_no to '1' indicates that
+					//'multiply' option has been selected
+				}
+				else
+					err_flg++;
+				/*
+				If the option 'a' is detected along with 'm',
+				then it's an error. Hence the error flag is incremented over here.
+				*/
+				break;
+				
+			case 'h':	
+				if(option_no == 0)
+				{	
+					//printf("[info] Help!\n");
+					option_no = 3; 
+					//Setting option_no to '3' indicates that
+					//'help' option has been selected
+				}
+				else
+					err_flg++;
+				break;
+				
+			case 'v':	
+				if(option_no == 0)
+				{	
+					//printf("[info] Version!\n");
+					option_no = 4; 
+					//Setting option_no to '4' indicates that
+					//'version' option has been selected
+				}
+				else
+					err_flg++;
+				break;
+				
+			case '?':	
+				if( !isdigit(optopt) )
+				{	
+					printf("[error] I can't recognise '%c' option\n", optopt);
+					err_flg++;
+				}
+				break;
+			
+			default	:	
+				printf("[info] Now this is some out of the world return value. Can't deal with this. Goodbye!\n");
 		}
 		
 	}
@@ -224,32 +264,71 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 	return err_flg;
 }
 
-float calc_value(int argc, char* argv[], int option_no)
+int calc_value(int argc, char* argv[], struct number* result, int option_no)
 {
-	int i;
-	float value = 0, temp = 0;
+	int i, return_value = 1;
+	struct number temp = {0, 0};
 	
 	switch(option_no)
 	{
 		//add
 		case 1	:	for (i = 0; i < argc; i += 1)
-							{
-								sscanf(argv[i], "%f", &temp);
-								value += temp;
-							}
-							break;
+					{
+						sscanf(argv[i], "%f", &temp.value);
+											
+						//record the precision of the scanned no. and
+						//adjust the precision of the result accordingly
+						temp.precision = obtain_precision(argv[i]);
+						if( result->precision < temp.precision )
+							result->precision = temp.precision;
+						
+						result->value += temp.value;
+					}
+					break;
 		//multiply
-		case 2	: value = 1;
-							for (i = 0; i < argc; i += 1)
-							{
-								sscanf(argv[i], "%f", &temp);
-								value *= temp;
-							}
-							break;
+		case 2	:	result->value = 1;
+					int result_precision = 0;
+					
+					for (i = 0; i < argc; i += 1)
+					{
+						sscanf(argv[i], "%f", &temp.value);
+						
+						//record the precision of the scanned no. and
+						//adjust the precision of the result accordingly
+						temp.precision = obtain_precision(argv[i]);
+						result_precision = result->precision + temp.precision;
+						if( result_precision < MAX_PRECISION ) 
+							//if the resulting precision is less than the MAX_PRECISION value,
+							//then set the precision of the result as the sum of the 
+							//precision of the recently scanned no. and the last result value
+							result->precision = result_precision;
+						else
+							//otherwise, set the precision of the result to MAX_PRECISION value
+							result->precision = MAX_PRECISION;
+						
+						result->value *= temp.value;
+					}
+					break;
 		default	:	printf("[error] Incorrect option supplied!\n");	
+					return_value = 0;
 	}
 	
-	return value;
+	return return_value;
+}
+
+int obtain_precision(char* no_string)
+{
+	int precision = 0;
+	
+	//Locate the '.' in the 'no_string[]'
+	char *location = strchr(no_string, '.');
+	if( location != NULL )
+	{	
+		int index = location - no_string;
+		precision = strlen(no_string) - (index+1);
+	}
+		
+	return precision;
 }
 
 int display_usage(void)
