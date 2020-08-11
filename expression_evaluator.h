@@ -49,6 +49,7 @@ int is_valid_operator(char);
 int calculate(char, struct number*, int, struct number*);
 int obtain_ary(char);
 int obtain_precedence(char);
+int adjust_precision(float*);
 
 int create_element_list(struct element**, int);
 void display_elements(struct element*, int);

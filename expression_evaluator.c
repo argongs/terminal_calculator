@@ -755,6 +755,68 @@ int check_safety(char *infix_expr, int i)
 		return 0;
 }
 
+int adjust_precision(float *value)
+{
+	char no_string[20];
+	int i = 0, zero_streak = 0;
+	
+	//sprintf will convert the float type 'value' into a string
+	sprintf(no_string, "%.*f", MAX_PRECISION+1,*value);
+	//Note that the precision of the 'value' is set to MAX_PRECISION+1
+	//Why? 
+	//Because in the following code, it will allow us to round off
+	//the 'value' to have a precision value of MAX_PRECISION
+	
+	char *decimal_ptr = strchr(no_string, '.');
+	int decimal_index = decimal_ptr - no_string;
+	i = decimal_index + 1;
+	int last_index = decimal_index + MAX_PRECISION;
+	
+	if( no_string[i] == '\0' )
+		return -1; //incorrect input
+	else
+	{
+		do
+		{
+			if( isdigit(no_string[i]) )
+			{
+				if( no_string[i] == '0' )
+					zero_streak++;
+				else
+					zero_streak = 0;
+				i++;
+			}
+			else
+				return -1; //incorrect input
+				
+		}while (no_string[i] != '\0' && i <= last_index);
+	
+		if( zero_streak )
+			return MAX_PRECISION - zero_streak;
+			//Eg.
+			//Index 0 1 2 3 4 5 6 7
+			//Value	0 . 5 0 0 0 0 0
+			//Based on above logic, the value of 'zero_streak' in
+			//above case will be 5. Now, if MAX_PRECISION is set to 
+			//6 then, simply doing MAX_PRECISION - zero_streak will
+			//give us the no. of significant digits after the decimal
+			//point and thus the most appropriate precision value.
+		else
+		{
+			
+			//Round off the value if the input no. has at least MAX_PRECISION no. of significant figures after the decimal point.
+			//The rounding off will be done in order to bring down
+			//the precision of the input no. to MAX_PRECISION, since the precision of the default 'float' type of C is higher.
+			
+			//In order to roundoff, we simply see the digit at the 'last_index+1' location. If that digit lies between 5 and 9 (5 & 9 excluded), then we increment the digit present at 'last_index' location
+			
+			if(no_string[last_index+1] > '5' && no_string[last_index+1] < '9')
+				*value += powf(10, MAX_PRECISION);
+			
+			return MAX_PRECISION;
+		}
+	}
+}
 int create_element_list(struct element **element_list, int length)
 {
 	*element_list = malloc(length*sizeof(struct element));

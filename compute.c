@@ -96,7 +96,12 @@ int main(int argc, char *argv[])
 			struct number result = {0, 0};
 			int eval_status = eval_expr(argv[1], &result);
 			if(eval_status == 2)
-				printf("[info] Result : %.*f\n", result.precision, result.value);
+			{	
+				int return_value = adjust_precision(&result.value);
+				if( return_value != -1)
+				{
+					result.precision = return_value;			
+					printf("[info] Result : %.*f\n", result.precision, result.value);
 				//Note that usage of '*' in '.*f' allows us to make use of variable
 				//precision value. For instance, via this method we can display
 				//5.653 as 5.6 OR 5.65 OR 5.653, depending upon the value of precision we provide.
@@ -107,6 +112,10 @@ int main(int argc, char *argv[])
 				//printf("%.*f", precision, float_value);
 				//					^			^
 				//precision value---|			|--float value to display
+				}
+				else
+					printf("[error] The input value given to 'adjust_precision()' function is incorrect.\n");
+			}
 			else
 				printf("[info] Couldn't evaluate the expression\n");
 		}
