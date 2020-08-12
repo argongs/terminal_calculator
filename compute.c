@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 				if( calc_value(argc, argv, &result, user_opt) > 0 )
 					printf("[info] Result : %.*f\n", result.precision, result.value);
 				else
-					printf("[error] Only numbers are accepted as input, whenever '-a' OR '-m' option is used.\n");
+					printf("[error] Only numbers & mathematical constants (pi & e) are accepted as input, whenever '-a' OR '-m' option is used. \n");
 			}
 			else //for showing help, version etc. info
 			{
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 			int eval_status = eval_expr(argv[1], &result);
 			if(eval_status == 2)
 			{	
-				int return_value = adjust_precision(&result.value);
+				int return_value = adjust_precision(result.value);
 				if( return_value != -1)
 				{
 					result.precision = return_value;			
@@ -290,10 +290,23 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 						number_status = check_number(argv[i]);
 						if( number_status != -1 )
 						{
-							sscanf(argv[i], "%f", &temp.value);
-												
-							//record the precision of the scanned no. and adjust the precision of the result accordingly
-							temp.precision = number_status;
+							if( number_status != -2 )
+							{	
+								sscanf(argv[i], "%f", &temp.value);	
+								//record the precision of the scanned no. and adjust the precision of the result accordingly
+								temp.precision = number_status;
+							}
+							else
+							{
+								return_value = lookup_constant(argv[i], 0, &temp);
+								//Check the results of the constant lookup. If the constant was illegal OR if the charachter sitting right after the constant is illegal. Note that the return value obtained from lookup_constant is basically an index that points right at the memory location that appears after the constant
+								if( return_value == 0 || argv[i][return_value] != '\0' )
+								{
+									return_value = 0;	
+									break; //illegal charachter detected
+								}
+							}
+							
 							if( result->precision < temp.precision )
 								result->precision = temp.precision;
 							
@@ -316,10 +329,23 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 						number_status = check_number(argv[i]);
 						if( number_status != -1 )
 						{
-							sscanf(argv[i], "%f", &temp.value);
+							if( number_status != -2 )
+							{	
+								sscanf(argv[i], "%f", &temp.value);	
+								//record the precision of the scanned no. and adjust the precision of the result accordingly
+								temp.precision = number_status;
+							}
+							else
+							{
+								return_value = lookup_constant(argv[i], 0, &temp);
+								//Check the results of the constant lookup. If the constant was illegal OR if the charachter sitting right after the constant is illegal. Note that the return value obtained from lookup_constant is basically an index that points right at the memory location that appears after the constant
+								if( return_value == 0 || argv[i][return_value] != '\0' )
+								{
+									return_value = 0;	
+									break; //illegal charachter detected
+								}
+							}
 							
-							//record the precision of the scanned no. and adjust the precision of the result accordingly
-							temp.precision = number_status;
 							result_precision = result->precision + temp.precision;
 							if( result_precision < MAX_PRECISION ) 
 								//if the resulting precision is less than the MAX_PRECISION value,
@@ -354,6 +380,17 @@ int check_number(char* no_string)
 	
 	if( no_string[i] == '-')
 		i++; //escape the '-' sign in the beginning
+	else if( isalpha(no_string[i]) ) //check if the input is an alphabetical letter, because if it is, then it indicates possible presence of a constant
+	{
+		if(strlen(no_string) < 3)//Max. length of the string that represents the mathematical constant will be less than 3 (Eg. Length of 'pi' is 2 and 'e' is 1)
+			return -2;//to represent possible presence of a constant  
+		else
+		{
+			printf("[error] Incorrect usage of constants detected\n");
+			return -1;
+		}
+	}
+	
 	
 	while ( no_string[i] != '\0' )
 	{

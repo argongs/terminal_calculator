@@ -548,26 +548,32 @@ int parse_element(char *infix_expr, int i, struct element* data)
 	//-> a letter of english alphabet, then it might be possibly a constant
 	else if( isalpha(infix_expr[i]) )
 	{
-		switch( infix_expr[i] )
-		{
-			case	'e'	: //for handling euler's constant
-				data->type.operand.value = M_E;
-				data->type.operand.precision = MAX_PRECISION;
-				data->is_operator = 0;
-				return i+1; //return next_index to evaluate
+		int return_status = lookup_constant(infix_expr, i, &(data->type.operand));
+		data->is_operator = 0;
+		return return_status;
+	}
+}
+
+//Check if the input 'term' is a mathematical constant OR not. If it is, then simply lookup the corresponding value and store it in the provided data structure
+int lookup_constant(char *term, int i, struct number* no) 
+{
+	switch( term[i] )
+	{
+		case	'e'	: //for handling euler's constant
+			no->value = M_E;
+			no->precision = MAX_PRECISION;
+			return i+1; //return next_index to evaluate
+			//break;
+		case	'p' : //for handling the 'pi'
+			if( term[i+1] == 'i')
+			{
+				no->value = M_PI;
+				no->precision = MAX_PRECISION;
+				return i+2; //return next_index to evaluate
 				//break;
-			case	'p' : //for handling the 'pi'
-				if( infix_expr[i+1] == 'i')
-				{
-					data->type.operand.value = M_PI;
-					data->type.operand.precision = MAX_PRECISION;
-					data->is_operator = 0;
-					return i+2; //return next_index to evaluate
-					//break;
-				}
-			default	:
-				return 0; //unable to parse due to incorrect 
-		}
+			}
+		default	:
+			return 0; //unable to parse due to presence of illegal charachter
 	}
 }
 
@@ -755,13 +761,13 @@ int check_safety(char *infix_expr, int i)
 		return 0;
 }
 
-int adjust_precision(float *value)
+int adjust_precision(float value)
 {
 	char no_string[20];
 	int i = 0, zero_streak = 0;
 	
 	//sprintf will convert the float type 'value' into a string
-	sprintf(no_string, "%.*f", MAX_PRECISION+1,*value);
+	sprintf(no_string, "%.*f", MAX_PRECISION+1,value);
 	//Note that the precision of the 'value' is set to MAX_PRECISION+1
 	//Why? 
 	//Because in the following code, it will allow us to round off
@@ -804,19 +810,14 @@ int adjust_precision(float *value)
 		else
 		{
 			
-			//Round off the value if the input no. has at least MAX_PRECISION no. of significant figures after the decimal point.
-			//The rounding off will be done in order to bring down
-			//the precision of the input no. to MAX_PRECISION, since the precision of the default 'float' type of C is higher.
-			
-			//In order to roundoff, we simply see the digit at the 'last_index+1' location. If that digit lies between 5 and 9 (5 & 9 excluded), then we increment the digit present at 'last_index' location
-			
-			if(no_string[last_index+1] > '5' && no_string[last_index+1] < '9')
-				*value += powf(10, MAX_PRECISION);
+			//Note that we don't need to round off the input value, since printf() takes care of it by default. Forceful roundoff over here will lead to incorrect result since by default printf will round off the results prior to display
 			
 			return MAX_PRECISION;
 		}
 	}
 }
+
+
 int create_element_list(struct element **element_list, int length)
 {
 	*element_list = malloc(length*sizeof(struct element));
