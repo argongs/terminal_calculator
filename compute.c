@@ -22,7 +22,7 @@ A major limitation : The -a and -m flags DO NOT accept negative nos.
 
 int eval_opt(int, char* [], int*, int*);
 int calc_value(int, char* [], struct number*, int);
-int obtain_precision(char*);
+int check_number(char*);
 int display_usage(void);
 
 //argc : argument count | argv : argument vector
@@ -65,10 +65,11 @@ int main(int argc, char *argv[])
 				argv += option_index;	
 				
 				struct number result = {0,0};
-				//Send the input expression for evaluation and print the results,
-				//if the calculation has happened flawlessly
-				if( calc_value(argc, argv, &result, user_opt) )
-					printf("[info] Result : %.*f\n", result.precision, result.value);//);
+				//Send the input expression for evaluation and print the results, if the calculation has happened flawlessly
+				if( calc_value(argc, argv, &result, user_opt) > 0 )
+					printf("[info] Result : %.*f\n", result.precision, result.value);
+				else
+					printf("[error] Only numbers are accepted as input, whenever '-a' OR '-m' option is used.\n");
 			}
 			else //for showing help, version etc. info
 			{
@@ -136,7 +137,6 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 {
 	//Evaluate the input options and corresponding arguments
 	int scanned_option = 0, option_no = 0, err_flg = 0;
-	int return_array[2];
 	//'scanned_option' will be used to hold the options obtained via 'getopt()'
 	
 	/*
@@ -155,13 +155,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 	detected yet. And if it's >0 then it represents that error has 
 	been detected.
 	*/
-	
-	/*
-	return_array is responsible for holding 2 values. One is the value
-	of the 'err_flg' variable and the other will be the value of 
-	'optind' (the variable from the 'unistd.h' library).  
-	*/
-	
+		
 	/*
 	Presence of ':' charachter right in the beginning of the 'option'
 	string ensures that if 'getopt()' function cannot find an argument 
@@ -183,7 +177,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 		/*
 		Note that 'optind' is a variable that comes from 'unistd.h'
 		library. If it contains value 'k' then it implies that 
-		currently, 'k'th option is being evaluated 
+		recently, '(k-1)'th index of argv[] has been evaluated 
 		*/
 		//printf("[info] Option no. %d is '%c', with opterr = %d\n", optind, scanned_option, opterr);
 		
@@ -201,9 +195,12 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				if(option_no == 0)
 				{	
 					//printf("[info] Add!\n");
-					option_no = 1; 
+					option_no = 1;
 					//Setting option_no to '1' indicates that
 					//'add' option has been selected
+					
+					*option_index = optind;
+					//Note that we have updated the *option_index value here itself, instead of waiting for the loop to end. Why? Because this program allows usage of atmost one option only. And as soon as an option is discovered, we need to trap it's index in *option_index. Because otherwise, if there are -ve nos. present in the argument list, then the program has the tendency to treat them as options, due to which it will further modify the 'optind' value. And if that happens, then the program will basically ignore these negative no. arguments.
 				}
 				else
 					err_flg++;
@@ -217,9 +214,12 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				if(option_no == 0)
 				{	
 					//printf("[info] Mul!\n");
-					option_no = 2; 
-					//Setting option_no to '1' indicates that
+					option_no = 2;
+					//Setting option_no to '2' indicates that
 					//'multiply' option has been selected
+					
+					*option_index = optind;
+					//Note that we have updated the *option_index value here itself, instead of waiting for the loop to end. Why? Because this program allows usage of atmost one option only. And as soon as an option is discovered, we need to trap it's index in *option_index. Because otherwise, if there are -ve nos. present in the argument list, then the program has the tendency to treat them as options, due to which it will further modify the 'optind' value. And if that happens, then the program will basically ignore these negative no. arguments.
 				}
 				else
 					err_flg++;
@@ -254,20 +254,23 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				break;
 				
 			case '?':	
-				if( !isdigit(optopt) )
-				{	
+				if( !isdigit(optopt) && optopt != '.' )
+				{
 					printf("[error] I can't recognise '%c' option\n", optopt);
 					err_flg++;
 				}
+					
 				break;
 			
 			default	:	
 				printf("[info] Now this is some out of the world return value. Can't deal with this. Goodbye!\n");
+				err_flg++;
+				break; //meant to throw the control out of the above while loop
 		}
 		
 	}
 	
-	*option_index = optind;
+	//*option_index = optind;
 	*user_opt = option_no;
 		
 	return err_flg;
@@ -275,7 +278,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 
 int calc_value(int argc, char* argv[], struct number* result, int option_no)
 {
-	int i, return_value = 1;
+	int i, return_value = 1, number_status = 0;
 	struct number temp = {0, 0};
 	
 	switch(option_no)
@@ -283,15 +286,24 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 		//add
 		case 1	:	for (i = 0; i < argc; i += 1)
 					{
-						sscanf(argv[i], "%f", &temp.value);
-											
-						//record the precision of the scanned no. and
-						//adjust the precision of the result accordingly
-						temp.precision = obtain_precision(argv[i]);
-						if( result->precision < temp.precision )
-							result->precision = temp.precision;
-						
-						result->value += temp.value;
+						//Check if the scanned argument is really a no. OR not.
+						number_status = check_number(argv[i]);
+						if( number_status != -1 )
+						{
+							sscanf(argv[i], "%f", &temp.value);
+												
+							//record the precision of the scanned no. and adjust the precision of the result accordingly
+							temp.precision = number_status;
+							if( result->precision < temp.precision )
+								result->precision = temp.precision;
+							
+							result->value += temp.value;
+						}
+						else
+						{
+							return_value = -1;
+							break;
+						}
 					}
 					break;
 		//multiply
@@ -299,23 +311,32 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 					int result_precision = 0;
 					
 					for (i = 0; i < argc; i += 1)
-					{
-						sscanf(argv[i], "%f", &temp.value);
-						
-						//record the precision of the scanned no. and
-						//adjust the precision of the result accordingly
-						temp.precision = obtain_precision(argv[i]);
-						result_precision = result->precision + temp.precision;
-						if( result_precision < MAX_PRECISION ) 
-							//if the resulting precision is less than the MAX_PRECISION value,
-							//then set the precision of the result as the sum of the 
-							//precision of the recently scanned no. and the last result value
-							result->precision = result_precision;
+					{	
+						//Check if the scanned argument is really a no. OR not.
+						number_status = check_number(argv[i]);
+						if( number_status != -1 )
+						{
+							sscanf(argv[i], "%f", &temp.value);
+							
+							//record the precision of the scanned no. and adjust the precision of the result accordingly
+							temp.precision = number_status;
+							result_precision = result->precision + temp.precision;
+							if( result_precision < MAX_PRECISION ) 
+								//if the resulting precision is less than the MAX_PRECISION value,
+								//then set the precision of the result as the sum of the 
+								//precision of the recently scanned no. and the last result value
+								result->precision = result_precision;
+							else
+								//otherwise, set the precision of the result to MAX_PRECISION value
+								result->precision = MAX_PRECISION;
+							
+							result->value *= temp.value;
+						}
 						else
-							//otherwise, set the precision of the result to MAX_PRECISION value
-							result->precision = MAX_PRECISION;
-						
-						result->value *= temp.value;
+						{
+							return_value = -1;
+							break;
+						}
 					}
 					break;
 		default	:	printf("[error] Incorrect option supplied!\n");	
@@ -325,18 +346,41 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 	return return_value;
 }
 
-int obtain_precision(char* no_string)
+//Check if the input string contains a no. OR not. If it contains a no. then return the precision of that no.
+int check_number(char* no_string)
 {
-	int precision = 0;
+	int i = 0, precision = 0, decimal_index = -1;
+	int is_dot_safe = 0;
 	
-	//Locate the '.' in the 'no_string[]'
-	char *location = strchr(no_string, '.');
-	if( location != NULL )
-	{	
-		int index = location - no_string;
-		precision = strlen(no_string) - (index+1);
+	if( no_string[i] == '-')
+		i++; //escape the '-' sign in the beginning
+	
+	while ( no_string[i] != '\0' )
+	{
+		//Check if the scanned charachter is valid.
+		//If it's a digit then move on to the next charachter 
+		if( !isdigit(no_string[i]) )
+		{
+		//otherwise check whether the scanned charachter is '.' symbol. This symbol represents the decimal point. If it occurs then it should be present:
+		//- neither at the first index NOR at the last index. [Implemented as : no_string[i+1] != '\0' && i > 0]
+		//- atmost once in the no. string. As soon as it occurs for the first time, the value of 'decimal_index' will be changed from '-1' to the value held by 'i' variable. [Implemented as : decimal_index == -1]
+			is_dot_safe = no_string[i+1] != '\0' && i > 0 && decimal_index == -1;  
+			if( no_string[i] == '.' && is_dot_safe )
+				decimal_index = i;
+			else
+				return -1; //input is not a number.
+		}
+		i++;
 	}
+	
+	if( decimal_index > 0 ) //indication of floating point no.
+	{	
+		precision = i - decimal_index - 1; 
+	//Note that currently the index value held in 'i' points to '\0', i.e. the end of string charachter
+		//Limiting the maximum precision value
+		precision = precision > MAX_PRECISION ? MAX_PRECISION : precision;
 		
+	}
 	return precision;
 }
 
