@@ -548,26 +548,26 @@ int parse_element(char *infix_expr, int i, struct element* data)
 	//-> a letter of english alphabet, then it might be possibly a constant
 	else if( isalpha(infix_expr[i]) )
 	{
-		int return_status = lookup_constant(infix_expr, i, &(data->type.operand));
+		int return_status = lookup_constant(1, infix_expr, i, &(data->type.operand));
 		data->is_operator = 0;
 		return return_status;
 	}
 }
 
 //Check if the input 'term' is a mathematical constant OR not. If it is, then simply lookup the corresponding value and store it in the provided data structure
-int lookup_constant(char *term, int i, struct number* no) 
+int lookup_constant(int multiplier, char *term, int i, struct number* no) 
 {
 	switch( term[i] )
 	{
 		case	'e'	: //for handling euler's constant
-			no->value = M_E;
+			no->value = multiplier*M_E;
 			no->precision = MAX_PRECISION;
 			return i+1; //return next_index to evaluate
 			//break;
 		case	'p' : //for handling the 'pi'
 			if( term[i+1] == 'i')
 			{
-				no->value = M_PI;
+				no->value = multiplier*M_PI;
 				no->precision = MAX_PRECISION;
 				return i+2; //return next_index to evaluate
 				//break;

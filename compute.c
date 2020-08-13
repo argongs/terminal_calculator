@@ -65,11 +65,17 @@ int main(int argc, char *argv[])
 				argv += option_index;	
 				
 				struct number result = {0,0};
-				//Send the input expression for evaluation and print the results, if the calculation has happened flawlessly
-				if( calc_value(argc, argv, &result, user_opt) > 0 )
-					printf("[info] Result : %.*f\n", result.precision, result.value);
+				
+				if( argc > 0) //Check if the arguments ain't empty
+				{
+					//Send the input expression for evaluation and print the results, if the calculation has happened flawlessly
+					if( calc_value(argc, argv, &result, user_opt) > 0 )
+						printf("[info] Result : %.*f\n", result.precision, result.value);
+					else
+						printf("[error] Only numbers & mathematical constants (pi & e) are accepted as input, whenever '-a' OR '-m' option is used. \n");
+				}
 				else
-					printf("[error] Only numbers & mathematical constants (pi & e) are accepted as input, whenever '-a' OR '-m' option is used. \n");
+					printf("[error] Can't perform the designated operation due to lack of arguments.\n");
 			}
 			else //for showing help, version etc. info
 			{
@@ -157,27 +163,17 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 	*/
 		
 	/*
-	Presence of ':' charachter right in the beginning of the 'option'
-	string ensures that if 'getopt()' function cannot find an argument 
-	for an argument-based-option in the input option then it'll return
-	':' charachter. 
+	Presence of ':' charachter right in the beginning of the 'option' string ensures that if 'getopt()' function cannot find an argument for an argument-based-option in the input option then it'll return ':' charachter. 
 	Now what happens if the first charachter ain't ':'?
-	In it's absence, 'getopt()' will return '?' 
-	charachter if it cannot find an argument for argument-based-option.
-	Note that, if 'getopt()' encounters an option charachter that is 
-	not present in the 'option' string then it will return '?'.
-	(regardless of the presence of ':' as the first charachter in the 'option' string)
+	In it's absence, 'getopt()' will return '?' charachter if it cannot find an argument for argument-based-option. Note that, if 'getopt()' encounters an option charachter that is not present in the 'option' string then it will return '?'.(regardless of the presence of ':' as the first charachter in the 'option' string)
 	*/
 	  
 	const char *options = ":amhv"; 
-	//'getopt()' returns '-1' after it has scanned all the input 
-	//options and thier corresponding arguments(if they exist) 
+	//'getopt()' returns '-1' after it has scanned all the input options and thier corresponding arguments (if they exist) 
 	while(err_flg == 0 && (scanned_option = getopt(argc, argv, options)) != -1)
 	{
 		/*
-		Note that 'optind' is a variable that comes from 'unistd.h'
-		library. If it contains value 'k' then it implies that 
-		recently, '(k-1)'th index of argv[] has been evaluated 
+		Note that 'optind' is a variable that comes from 'unistd.h' library. If it contains value 'k' then it implies that recently, '(k-1)'th index of argv[] has been evaluated 
 		*/
 		//printf("[info] Option no. %d is '%c', with opterr = %d\n", optind, scanned_option, opterr);
 		
@@ -191,7 +187,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 		
 		switch(scanned_option)
 		{
-			case 'a':	
+			case 'a' :	
 				if(option_no == 0)
 				{	
 					//printf("[info] Add!\n");
@@ -210,7 +206,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				*/
 				break;
 				
-			case 'm':	
+			case 'm' :	
 				if(option_no == 0)
 				{	
 					//printf("[info] Mul!\n");
@@ -229,7 +225,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				*/
 				break;
 				
-			case 'h':	
+			case 'h' :	
 				if(option_no == 0)
 				{	
 					//printf("[info] Help!\n");
@@ -241,25 +237,29 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 					err_flg++;
 				break;
 				
-			case 'v':	
+			case 'v' :	
 				if(option_no == 0)
 				{	
 					//printf("[info] Version!\n");
 					option_no = 4; 
-					//Setting option_no to '4' indicates that
-					//'version' option has been selected
+					//Setting option_no to '4' indicates that 'version' option has been selected
 				}
 				else
 					err_flg++;
 				break;
 				
-			case '?':	
+			case '?' :
 				if( !isdigit(optopt) && optopt != '.' )
 				{
 					printf("[error] I can't recognise '%c' option\n", optopt);
 					err_flg++;
 				}
 					
+				break;
+			
+			case ':' :
+				printf("[error] Input is required for this option to work.\n");
+				err_flg++;
 				break;
 			
 			default	:	
@@ -290,7 +290,7 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 						number_status = check_number(argv[i]);
 						if( number_status != -1 )
 						{
-							if( number_status != -2 )
+							if( number_status > -1 )
 							{	
 								sscanf(argv[i], "%f", &temp.value);	
 								//record the precision of the scanned no. and adjust the precision of the result accordingly
@@ -298,8 +298,23 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 							}
 							else
 							{
-								return_value = lookup_constant(argv[i], 0, &temp);
+								switch (number_status)
+								{
+									//positive constant
+									case -2 :
+										return_value = lookup_constant(1, argv[i], 0, &temp);
+										break;
+									//negative constant
+									case -3 :
+										return_value = lookup_constant(-1, argv[i], 1, &temp);//in case of a -ve constant the first charachter will be '~' at index '0'. Starting from index '1' the name of the constant will appear. Hence, the index argument of the 'lookup_constant()' is set to 1 here, so that the lookup_constant function can detect the constant appropriately
+										break;
+									default :
+										printf("[error] Code corrupted\n"); //this scenario should never ever take place. Because if it does, then it indicates the occurence of code corruption. 
+										return_value = -1;
+										break;
+								}
 								//Check the results of the constant lookup. If the constant was illegal OR if the charachter sitting right after the constant is illegal. Note that the return value obtained from lookup_constant is basically an index that points right at the memory location that appears after the constant
+								
 								if( return_value == 0 || argv[i][return_value] != '\0' )
 								{
 									return_value = 0;	
@@ -315,7 +330,7 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 						else
 						{
 							return_value = -1;
-							break;
+							break;//illegal charachter detected
 						}
 					}
 					break;
@@ -337,8 +352,23 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 							}
 							else
 							{
-								return_value = lookup_constant(argv[i], 0, &temp);
+								switch (number_status)
+								{
+									//positive constant
+									case -2 :
+										return_value = lookup_constant(1, argv[i], 0, &temp);
+										break;
+									//negative constant
+									case -3 :
+										return_value = lookup_constant(-1, argv[i], 1, &temp);//in case of a -ve constant the first charachter will be '~' at index '0'. Starting from index '1' the name of the constant will appear. Hence, the index argument of the 'lookup_constant()' is set to 1 here, so that the lookup_constant function can detect the constant appropriately 
+										break;
+									default :
+										printf("[error] Code corrupted\n"); //this scenario should never ever take place. Because if it does, then it indicates the occurence of code corruption. 
+										return_value = -1;
+										break;
+								}
 								//Check the results of the constant lookup. If the constant was illegal OR if the charachter sitting right after the constant is illegal. Note that the return value obtained from lookup_constant is basically an index that points right at the memory location that appears after the constant
+								
 								if( return_value == 0 || argv[i][return_value] != '\0' )
 								{
 									return_value = 0;	
@@ -378,12 +408,25 @@ int check_number(char* no_string)
 	int i = 0, precision = 0, decimal_index = -1;
 	int is_dot_safe = 0;
 	
-	if( no_string[i] == '-')
-		i++; //escape the '-' sign in the beginning
-	else if( isalpha(no_string[i]) ) //check if the input is an alphabetical letter, because if it is, then it indicates possible presence of a constant
+	if( no_string[i] == '-' || no_string[i] == '~')
+		i++; //escape the '-' OR '~' sign in the beginning
+		
+	if( isalpha(no_string[i]) ) //check if the input is an alphabetical letter, because if it is, then it indicates possible presence of a constant
 	{
-		if(strlen(no_string) < 3)//Max. length of the string that represents the mathematical constant will be less than 3 (Eg. Length of 'pi' is 2 and 'e' is 1)
-			return -2;//to represent possible presence of a constant  
+		if(strlen(no_string) < 4)//Max. length of the string that represents the mathematical constant will be less than 3 (Eg. Length of 'pi' is 2 and 'e' is 1)
+		{
+			//to represent possible presence of a constant
+			switch (i)
+			{
+				case 0 :
+					return -2; //constant with '+' sign
+				case 1 :
+					return -3; //constant with '-' sign
+				default :
+				printf("[error] Code corrupted\n"); //this scenario should never ever take place. Because if it does, then it indicates the occurence of code corruption.  
+				return -1;
+			}	
+		} 
 		else
 		{
 			printf("[error] Incorrect usage of constants detected\n");
