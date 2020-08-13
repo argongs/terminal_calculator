@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	
 	int option_index = 0, user_opt = 0;
 	
-	if( eval_opt(argc, argv, &option_index, &user_opt) || argc < 2)
+	if( eval_opt(argc, argv, &option_index, &user_opt) )
 	{
 		printf("[error] Incorrect usage detected.\n");
 		printf("[.....] Lemme show you how to use me mate.\n");
@@ -100,31 +100,38 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			struct number result = {0, 0};
-			int eval_status = eval_expr(argv[1], &result);
-			if(eval_status == 2)
-			{	
-				int return_value = adjust_precision(result.value);
-				if( return_value != -1)
-				{
-					result.precision = return_value;			
-					printf("[info] Result : %.*f\n", result.precision, result.value);
-				//Note that usage of '*' in '.*f' allows us to make use of variable
-				//precision value. For instance, via this method we can display
-				//5.653 as 5.6 OR 5.65 OR 5.653, depending upon the value of precision we provide.
-				//How do we supply the value of precision?
-				//By placing an integer value (which will hold the precision value)
-				//which immdiately after the string provided to printf.
-				//i.e. 				
-				//printf("%.*f", precision, float_value);
-				//					^			^
-				//precision value---|			|--float value to display
+			if( argc == 2 )
+			{
+				struct number result = {0, 0};
+				int eval_status = eval_expr(argv[1], &result);
+				if(eval_status == 2)
+				{	
+					int return_value = adjust_precision(result.value);
+					if( return_value != -1)
+					{
+						result.precision = return_value;			
+						printf("[info] Result : %.*f\n", result.precision, result.value);
+					//Note that usage of '*' in '.*f' allows us to make use of variable
+					//precision value. For instance, via this method we can display
+					//5.653 as 5.6 OR 5.65 OR 5.653, depending upon the value of precision we provide.
+					//How do we supply the value of precision?
+					//By placing an integer value (which will hold the precision value)
+					//which immdiately after the string provided to printf.
+					//i.e. 				
+					//printf("%.*f", precision, float_value);
+					//					^			^
+					//precision value---|			|--float value to display
+					}
+					else
+						printf("[error] The input value given to 'adjust_precision()' function is incorrect.\n");
 				}
 				else
-					printf("[error] The input value given to 'adjust_precision()' function is incorrect.\n");
+					printf("[info] Couldn't evaluate the expression\n");
 			}
-			else
-				printf("[info] Couldn't evaluate the expression\n");
+			else if( argc < 2 )
+				printf("[error] No expression found. Please enter a mathematical expression next time for evaluation.\n");
+			else	
+				printf("[error] Found too many inputs. Only one expression is allowed in the expression mode.\n");
 		}
 	}
 		
