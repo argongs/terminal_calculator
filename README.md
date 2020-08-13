@@ -74,5 +74,5 @@ Points to keep in mind :
      * `$ ./compute -m ~pi 4 4`
      * `$ ./compute -m ~e 3 4`
 
-     Notice the presence of '~' character in the direct operation mode. What does it indicate?
-It indicates negative sign. It's meant to be used only with the constants and that too in the direct operation mode. It helps the program to capture negative constants. Note that this character is illegal in the expression mode. There's no need to use this sign in expression mode since regular representation of minus sign i.e. '-' character works perfectly over there for both numbers as well as constants.
+     Notice the presence of `~` character in the direct operation mode. What does it indicate?    
+     It indicates negative sign. It's meant to be used only with the constants and that too in the direct operation mode. It helps the program to capture negative constants. Note that this character is illegal in the expression mode. There's no need to use this sign in expression mode since regular representation of minus sign i.e. `-` character works perfectly over there for both numbers as well as constants.
