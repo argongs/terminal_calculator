@@ -54,11 +54,11 @@ Points to keep in mind :
 1. Parenthesis is allowed, but only in the expression mode. Use it as much as you want in that mode. However enclose the expression in quotes i.e. '', whenever you wish to make use of the parenthesis.
   - Examples:
     * Correct usage - 
-      - $ ./compute '(1+2)' 
-      - $ ./compute '(1+2)\*3'
+      - `$ ./compute '(1+2)'` 
+      - `$ ./compute '(1+2)\*3'`
     * Incorrect usage -
-      - $ ./compute (1+2) 
-      - $ ./compute (1+2)\*3
+      - `$ ./compute (1+2)`
+      - `$ ./compute (1+2)\*3`
 
 2. The operators are evaluated according to the following precedence rule (high to low):
    > Parenthesis \> Exponential \> Division \> Multiplication \> Addition \> Subtraction
