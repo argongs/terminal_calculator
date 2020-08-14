@@ -1,8 +1,8 @@
 terminal_calculator, version 1.0.1
 ==================================
-This program is capable of handling simple mathematical expressions. The term 'simple mathematical expressions' written above refers to mathematical expressions that can be created by using real nos. and the following operators : " - + * / ^ ". Parentheses are also supported by this program.
+This program is capable of handling simple mathematical expressions. The term *simple mathematical expressions* written above refers to mathematical expressions that can be created by using real nos. and the following operators : ` - + * / ^ `. Parentheses are also supported by this program.
 
-Now let's see how you can make use of this program. The *compute* file is execution ready for debian-based systems. In case if you wish to compile it on your machine, then simply hit the 'make' command on your terminal(for \*nix type systems) OR command line (for windows) :
+Now let's see how you can make use of this program. The *compute* file is execution ready for debian-based systems. In case if you wish to compile it on your machine, then simply hit the 'make' command on your terminal (for \*nix type systems) OR command line (for windows) :
 
 `$make -C ~path/to/the/location/of/terminal_calculator`
 
