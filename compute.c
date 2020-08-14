@@ -1,7 +1,3 @@
-/*
-A major limitation : The -a and -m flags DO NOT accept negative nos.
-*/
-
 //C manually created libraries
 #include "expression_evaluator.h"
 //C POSIX libraries
@@ -28,16 +24,6 @@ int display_usage(void);
 //argc : argument count | argv : argument vector
 int main(int argc, char *argv[])
 {
-	//Display the input given
-	/*
-	printf("[info] Input Command :\t'");
-	for (int i = 1; i < argc; i += 1)
-	{
-		printf("%s ", argv[i]);
-	}
-	printf("'\n");
-	*/
-	
 	//printf("[info] Initially argc = %d and argv[0] = %s\n", argc, argv[0]);
 	
 	int option_index = 0, user_opt = 0;
