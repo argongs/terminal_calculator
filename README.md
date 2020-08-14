@@ -15,11 +15,11 @@ Now let's see how to use the executable file :
 
      `$ ./compute OPTIONS INPUT`
 
-   - OPTIONS
+   - `OPTIONS`
      * -a    Perform addition.
      * -m    Perform multiplication.
 
-   - INPUT
+   - `INPUT`
      * Real numbers separated by space.
      
    - Examples:
@@ -31,7 +31,7 @@ Now let's see how to use the executable file :
      
      `$./compute EXPRESSION`
 
-   - EXPRESSION
+   - `EXPRESSION`
      * Any mathematical expression that can be created by using the supported operators.
      * The supported operators are : + - \* / ^
 
@@ -43,7 +43,8 @@ Now let's see how to use the executable file :
    - Usage :
      
      `$./compute ABOUT`
-   - ABOUT
+     
+   - `ABOUT`
      * -h	Obtain the usage section and other helpful examples
      * -v	Obtain version of this program
      * -b	Obtain brief description of this program
