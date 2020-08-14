@@ -2,11 +2,11 @@ terminal_calculator, version 1.0.1
 ==================================
 This program is capable of handling simple mathematical expressions. The term *simple mathematical expressions* written above refers to mathematical expressions that can be created by using real nos. and the following operators : ` - + * / ^ `. Parentheses are also supported by this program.
 
-Now let's see how you can make use of this program. The *compute* file is execution ready for debian-based systems. In case if you wish to compile it on your machine, then simply hit the 'make' command on your terminal (for \*nix type systems) OR command line (for windows) :
+Now let's see how you can make use of this program. The **compute** file is execution ready for debian-based systems. In case if you wish to compile it on your machine, then simply hit the `make` command on your terminal (for \*nix type systems) OR command line (for windows) :
 
 `$make -C ~path/to/the/location/of/terminal_calculator`
 
-Note that you need to have [gcc](https://gcc.gnu.org/) along with [make](https://www.gnu.org/software/make/) installed on your system in order to compile the above mentioned program. Note the presence of the `-C` argument in the 'make' command. It tells the 'make' command to look for the 'makefile' in the specified directory.
+Note that you need to have [gcc](https://gcc.gnu.org/) along with [make](https://www.gnu.org/software/make/) installed on your system in order to compile **terminal_calculator**. Note the presence of the `-C` argument in the `make` command. It tells the `make` command to look for the **makefile** in the specified directory.
 
 Now let's see how to use the executable file :
 
