@@ -228,7 +228,7 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 								case 1	:	
 									if( item_stack.top < 0 )
 									{	
-										fprintf(stderr, "[error] Detected incorrect usage of operators in the infix expression.\n"); 
+										fprintf(stderr, "[error] Detected incorrect usage of operators/symbols in the infix expression.\n"); 
 										return_value = -1; //incorrect usage of symbols
 										break;
 									}
@@ -273,7 +273,7 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 				}
 				else //discovered erroraneous expression
 				{
-					fprintf(stderr, "[error] Detected incorrect usage of operators in the infix expression.\n");
+					fprintf(stderr, "[error] Detected incorrect usage of operators/symbols in the infix expression.\n");
 					return_value = -1;
 					break;
 				}
@@ -506,13 +506,17 @@ int parse_element(char *infix_expr, int i, struct element* data)
 			{
 				i++;
 			}
-			//-> a '.', then check whether the next element is a no.
-			//If the next element is a no. then simply move on.
-			//But if the next element is not a no. then, it indicates 
-			//the presence of an erroraneous expression
+			//-> a '.', then check whether the following conditions hold true :
+			//i. next element is a no. 
+			//ii.the 'decimal_index' is equal to 0. 
+			//If both the conditions mentioned above hold true, then simply move on.
+			//However, if atleast 1 condition isn't true, then it indicates 
+			//the presence of an erroraneous expression.
+			//The first condition is easy to understand. But what about the second one? What does it mean?
+			//The second condition ensures that atmost one decimal point should exist in a no. Note that initially 'decimal_index' variable is set to 0. If it's modified, then it implies that a decimal point has been located. Now note that, the 'decimal_index' variable will always be modified in such a way that the it's resultant value won't be 0. Why? Because the variable that is used to update 'decimal_index' is 'i'. This variable comes from the argument of this function, and the smallest value that it can have is 0 (since it represents the index of an array.) And right before entering this while() contruct, the value of 'i' is incremented by 1. Implying that the prior to entering this loop, the minimum value of 'i' will be 1. So, the minimum value that can be stored in the 'decimal_index' is 1. Hence, we can say that if 'decimal_index' holds a value that is > 0, then it implies that a decimal point has been encountered.
 			else if( infix_expr[i] == '.' )
 			{	
-				if( isdigit(infix_expr[i+1]) )
+				if( isdigit(infix_expr[i+1]) && decimal_index == 0 )
 				{
 					decimal_index = i; //storing the index at which '.' was found in order to calculate the precision of the no.
 					i += 2;
