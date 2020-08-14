@@ -6,7 +6,7 @@ Now let's see how you can make use of this program. The *compute* file is execut
 
 `$make -C ~path/to/the/location/of/terminal_calculator`
 
-Note that you need to have [gcc](https://gcc.gnu.org/) along with [make](https://www.gnu.org/software/make/) installed on your system in order to compile the above mentioned program. Note the presence of the '-C' argument in the 'make' command. It tells the 'make' command to look for the 'makefile' in the specified directory.
+Note that you need to have [gcc](https://gcc.gnu.org/) along with [make](https://www.gnu.org/software/make/) installed on your system in order to compile the above mentioned program. Note the presence of the `-C` argument in the 'make' command. It tells the 'make' command to look for the 'makefile' in the specified directory.
 
 Now let's see how to use the executable file :
 
@@ -16,8 +16,8 @@ Now let's see how to use the executable file :
      `$ ./compute OPTIONS INPUT`
 
    - `OPTIONS`
-     * -a    Perform addition.
-     * -m    Perform multiplication.
+     * `-a`    Perform addition.
+     * `-m`    Perform multiplication.
 
    - `INPUT`
      * Real numbers separated by space.
@@ -45,9 +45,9 @@ Now let's see how to use the executable file :
      `$./compute ABOUT`
      
    - `ABOUT`
-     * -h	Obtain the usage section and other helpful examples
-     * -v	Obtain version of this program
-     * -b	Obtain brief description of this program
+     * `-h`	Obtain the usage section and other helpful examples
+     * `-v`	Obtain version of this program
+     * `-b`	Obtain brief description of this program
 
 Points to keep in mind :
 ------------------------
