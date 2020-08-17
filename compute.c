@@ -12,7 +12,7 @@
 #define MAXLINE 1000 //maximum line length for a line read from a file
 
 #define PROGRAM_NAME "compute"
-#define VERSION "1.2"
+#define VERSION "1.1"
 
 //Funxn prototype area 
 

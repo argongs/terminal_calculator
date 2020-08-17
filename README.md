@@ -1,4 +1,4 @@
-terminal_calculator, version 1.2
+terminal_calculator, version 1.1
 ==================================
 This program is capable of handling simple mathematical expressions. The term *simple mathematical expressions* written above refers to mathematical expressions that can be created by using real nos. and the following operators : ` - + * / ^ `. Parentheses are also supported by this program.
 
