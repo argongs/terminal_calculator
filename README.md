@@ -1,4 +1,4 @@
-terminal_calculator, version 1.0.1
+terminal_calculator, version 1.2
 ==================================
 This program is capable of handling simple mathematical expressions. The term *simple mathematical expressions* written above refers to mathematical expressions that can be created by using real nos. and the following operators : ` - + * / ^ `. Parentheses are also supported by this program.
 
@@ -33,7 +33,7 @@ Now let's see how to use the executable file :
 
    - `EXPRESSION`
      * Any mathematical expression that can be created by using the supported operators.
-     * The supported operators are : + - \* / ^
+     * The supported operators are : `+ - \* / ^`
 
    - Examples :
      * `$ ./compute 1+2`
@@ -63,8 +63,8 @@ Points to keep in mind :
 2. The operators are evaluated according to the following precedence rule (high to low):
    > Parenthesis \> Exponential \> Division \> Multiplication \> Addition \> Subtraction
 
-3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of 'e' and Pi can be used by making 
-   use of 'pi' in the expression as well as direct operation mode.
+3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of *e* and Pi can be used by making 
+   use of *pi* in the expression as well as direct operation mode.
    - In expression mode :
      * `$ ./compute pi\+e`
      * `$ ./compute '(e+pi)\*90'`
@@ -77,3 +77,19 @@ Points to keep in mind :
 
      Notice the presence of `~` character in the direct operation mode. What does it indicate?    
      It indicates negative sign. It's meant to be used only with the constants and that too in the direct operation mode. It helps the program to capture negative constants. Note that this character is illegal in the expression mode. There's no need to use this sign in expression mode since regular representation of minus sign i.e. `-` character works perfectly over there for both numbers as well as constants.
+
+4. The following functions can be directly made use of in the expression mode :
+
+   i. Trigonometric functions -
+      * `sin()`, `cos()`& `tan()`
+      * Examples :   
+       -  `./compute 'sin(pi)+cos(pi)'`
+       -  `./compute 'tan(sin((cos(pi))))'`
+
+   ii. Logarithmic functions -
+       * `log2()` `loge()` `log10()` (representing log at base 2, e and 10 respectively) 
+       * Examples :
+         - `./compute log10(100)`
+         - `./compute log2(1024)/loge(e^2)`
+   
+   Note that the trigonometric functions treat the unit of the input angles as 'radians'.  
