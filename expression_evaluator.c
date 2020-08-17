@@ -20,6 +20,22 @@ const struct symbol_struct symbol_list[] = {
 	{'#', -4, 3, 0}//---|
 };
 
+struct defined_name constants[] = {
+	{"e", 1},
+	{"pi",2},
+	{NULL,0} //to mark the end of list of constants
+};
+
+struct defined_name functions[] = {
+	{"cos", 1},
+	{"log2", 2},
+	{"loge", 3},
+	{"log10", 4},
+	{"sin", 5},
+	{"tan", 6},
+	{NULL, 0} //to mark the end of list of functions
+};
+
 int eval_expr(char* expression, struct number* result)
 {
 	int expr_length = strlen(expression);
@@ -271,13 +287,29 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 					//return value of 'parse_element()')
 					continue;
 				}
-				else //discovered erroraneous expression
+				else //discovered erroraneous expression OR lack of memory 
 				{
-					fprintf(stderr, "[error] Detected incorrect usage of operators/symbols in the infix expression.\n");
-					return_value = -1;
-					break;
+					switch( next_index )
+					{
+						case -1 : //erroraneous expression
+							fprintf(stderr, "[error] Detected incorrect usage of operators/symbols in the infix expression.\n");
+							return_value = -1;
+							break;
+						
+						case -2 :
+							return_value = 0; //lack of memory
+							break;
+						
+						default :
+							fprintf(stderr, "[error] Unexprected behaviour detected from parse_element() function.\n");
+							return_value = -2;
+							break;	
+					}
+					
+					break; //break the loop as soon as an issue is discovered
 				}
-			}	
+			}
+			
 			i++;
 		}
 		
@@ -534,7 +566,7 @@ int parse_element(char *infix_expr, int i, struct element* data)
 		final_i = i;
 		char *no_string = strndup(infix_expr + initial_i, (final_i - initial_i)*sizeof(char));
 		//parse the scanned no. into a floating point no.
-		sscanf(no_string, "%f", &(data->type.operand.value));
+		sscanf(no_string, "%lf", &(data->type.operand.value));
 		if( decimal_index )
 			data->type.operand.precision = final_i - decimal_index - 1;
 		//Why final_i - decimal_index - 1 and not final_i - decimal_index?
@@ -552,34 +584,250 @@ int parse_element(char *infix_expr, int i, struct element* data)
 	//-> a letter of english alphabet, then it might be possibly a constant
 	else if( isalpha(infix_expr[i]) )
 	{
+		//Check if the scanned charachter belongs to one of the defined constants
 		int return_status = lookup_constant(1, infix_expr, i, &(data->type.operand));
+		
+		//Check if the scanned charachter belongs to one of the defined functions
+		return_status += lookup_function(infix_expr, i, &(data->type.operand));
+		
 		data->is_operator = 0;
 		return return_status;
 	}
 }
 
-//Check if the input 'term' is a mathematical constant OR not. If it is, then simply lookup the corresponding value and store it in the provided data structure
+//Check if the input 'term' represents a defined constant (defined in the 'constants' variable in 'expression_evaluator.h') OR not. If it is, then simply lookup the corresponding value and store it in the provided data structure
 int lookup_constant(int multiplier, char *term, int i, struct number* no) 
 {
-	switch( term[i] )
+	//record the name of the constant
+	int j = 0, max_length = 5;
+	char const_name[max_length];
+	
+	//Keep recording the name of the constant as long as all of the following conditions hold true:
+	//i. the name of the constant doesn't exceed the 'maxlength' in size 
+	//ii. alphabetical letters are encountered
+	//iii. the scanned charachter isn't the end of string charachter
+	
+	while( isalpha(term[i]) && term[i] != '\0' && j < max_length )
+		const_name[j++] = term[i++];
+	
+	if( j == max_length )
+		return 0; //not a valid constant
+	
+	const_name[j] = '\0'; //put end of string charahcter at the end of the array, which is used for storing the name of the constant. Why? Because the process of copying has been done manually, so the end of string charachter also has to be placed manually.
+	//Obtain the code for the scanned constant
+	int name_code = fetch_name_code( const_name, 1 );
+	
+	//Assign appropriate value to 'no' based on the code
+	switch( name_code )
 	{
-		case	'e'	: //for handling euler's constant
-			no->value = multiplier*M_E;
+		case 1 : //for handling euler's constant
+			no->value = M_E;
 			no->precision = MAX_PRECISION;
-			return i+1; //return next_index to evaluate
+			return i; //return next_index to evaluate
 			//break;
-		case	'p' : //for handling the 'pi'
-			if( term[i+1] == 'i')
-			{
-				no->value = multiplier*M_PI;
-				no->precision = MAX_PRECISION;
-				return i+2; //return next_index to evaluate
-				//break;
-			}
+		
+		case 2 : //for handling the 'pi'
+			no->value = M_PI;
+			no->precision = MAX_PRECISION;
+			return i; //return next_index to evaluate
+			//break;
+			
 		default	:
 			return 0; //unable to parse due to presence of illegal charachter
 	}
 }
+
+//Check if the input 'term' represents a defined function (defined in the 'constants' variable in 'expression_evaluator.h') OR not. If it is, then simply perform the function with the given input and store the corresponding result in the provided data structure
+int lookup_function(char *term, int i, struct number* no) 
+{
+	int j = 0, expr_length = 0, max_length = 10;
+	char func_name[5];
+	
+	char *input_expr = malloc(max_length*sizeof(int));
+	if(input_expr == NULL)
+	{
+		printf("[error] Can't process the input expression due to lack of memory. Please retry after sometime\n");
+		return -2;
+	}
+	
+	//Obtain name of the function
+	while( term[i] != '(' && term[i] != '\0' && j < 6)
+		func_name[j++] = term[i++];
+	
+	func_name[j] = '\0';//put end of string charahcter at the end of the array, which is used for storing the name of the function. Why? Because the process of copying has been done manually, so the end of string charachter also has to be placed manually.
+	
+	//Check the length of the function name as well as the usage of the function
+	//If the length exceeds the maximum function name length, then it's an incorrect function
+	//If the end of string charachter is obtained while scanning the name of the function, then either the function does not exist OR it is used incorrectly. In either case, parsing becomes impossible.
+	if(j == 6 || term[i] == '\0')
+		return 0; //unable to parse since the function does not exist
+	else if(term[i] == '(')
+	{	
+		j = 0;
+		input_expr[j++] = '('; //store the scanned '(' into an array which will be resposnible for holding the input expression
+		i++;//move on to the next index
+		expr_length++;
+		
+		//extract the expression that is present as input to the function
+		int counter = 1; //represents the no. of pairs of parantheses read
+		
+		//scan the expression given as input to the function for appropriate no. of parantheses 
+		while( counter != 0 && term[i] != '\0' )
+		{
+			if( term[i] == '(' )
+				counter++;
+			else if( term[i] == ')' )
+				counter--;
+			
+			input_expr[j++] = term[i++]; //copy the charachters scanned from the input expression into the array which is specially meant for storing the input expression
+			expr_length++;
+			
+			//increase the maximum length limit for the input expression, everytime it becomes full
+			if( j == max_length )
+			{
+				int increment_by = 10;
+				max_length += increment_by; 
+				char *allocation_status = realloc(input_expr, max_length*sizeof(char));
+				if(allocation_status == NULL)
+				{	
+					printf("[error] Can't process the expression given input to %s function due to lack of memory. Please retry after sometime\n", func_name);
+					return -2;
+				}
+			}
+		}
+		
+		//If the input expression is incorrect then, counter will not be 0  
+		if( counter != 0 )
+		{
+			printf("[error] The input expression provided to the %s function is incorrect.\n", func_name);
+			return -1; //unable to parse since the input given to the function is incorrect
+		}
+		 
+		input_expr[j] = '\0';//put end of string charahcter at the end of the array, which is used for storing the input expression. Why? Because the process of copying has been done manually, so the end of string charachter also has to be placed manually. 
+		 
+		//evaluate the input expression
+		struct number eval_result = {0,0};
+		int eval_status = eval_expr(input_expr, &eval_result);	
+		
+		free(input_expr); //free the space allocated to input_expr
+		
+		if(eval_status == 2)
+		{
+			//Obtain the code for the scanned function
+			int name_code = fetch_name_code( func_name, 2 );
+			
+			//Check whether OR not the scanned function is log2, loge OR log10.
+			//If it's one of them, then check if the input to that function is 0.
+			//If it's 0, then report 'not defined' error and stop 
+			if( name_code >= 2 &&  name_code <= 4 && eval_result.value <= 0 )
+			{
+				printf("[error] The input given to function %s evaluates to %.*f. And %s(%.*f) is not defined.\n", func_name, eval_result.precision, eval_result.value, func_name, eval_result.precision, eval_result.value);
+				exit(EXIT_FAILURE);
+			} 
+			
+			//Evaluate the function by using the evaluated result as input
+			switch( name_code )
+			{	
+				case 1 : //cos(x)
+					no->value = cosf(eval_result.value);
+					no->precision = MAX_PRECISION; 
+					break;
+					
+				case 2 : //log2(x)
+					no->value = log2f(eval_result.value);
+					no->precision = MAX_PRECISION;
+					break;
+					
+				case 3 : //loge(x)
+					no->value = logf(eval_result.value);
+					no->precision = MAX_PRECISION;
+					break;
+					
+				case 4 : //log10(x)
+					no->value = log10f(eval_result.value);
+					no->precision = MAX_PRECISION;
+					break;
+					
+				case 5 : //sin(x)
+					no->value = sinf(eval_result.value);
+					no->precision = MAX_PRECISION;
+					break;
+					
+				case 6 : //tan(x)
+				//note that the usage of braces is necessary in order to create and initialise variables inside a 'case' section of a switch block. In absence of these braces, any sort of simultaneous creation of a variable and initialisation is declared incorrect (eg. int i = 0; simultaneously creates a variable 'i' and initialises it to 0). TO read more about this issue head over to : "https://stackoverflow.com/questions/92396/why-cant-variables-be-declared-in-a-switch-statement#92439"
+				{	
+					
+					float multiplicity = eval_result.value/M_PI_2; //Obtain the multiplicity of the input w.r.t. pi/2
+					int approx_multiplicity = roundf(multiplicity); //Round off the multiplicity to the nearest integer
+					int is_diff_small = isless(fabsf(multiplicity - approx_multiplicity), powf(10, -MAX_PRECISION)); //Compare the difference b/w. the rounded off multiplicity and actual multiplicity w.r.t. 10^(-MAX_PRECISION). If the difference value is higher that 10^(-MAX_PRECISION), then it implies that the difference is significant b/w. the approximate and actual multiplicity. If the difference is less than 10^(-MAX_PRECISION) then it implies that the difference ain't significant thus, the input value represents an angle that is basically a multiple of pi/2.
+					
+					//If the difference is small and the approximated multiplitcity is odd, then it basically implies that the input that will be fed to tan() is nothing but an odd mulitple of pi/2. And at odd multiples of pi/2 the tan function yields a not defined result
+					if(is_diff_small && approx_multiplicity%2)
+					{
+						printf("[error] The input given to function tan() evaluates to an odd multiple of pi/2. And result of applying tan() on such input is not defined.\n");
+						exit(EXIT_FAILURE);
+					}
+					else
+					{
+						no->value = tanf(eval_result.value);
+						no->precision = MAX_PRECISION;
+					}
+				}
+					break;
+					
+				default :
+					printf("[error] Unexpected return value recieved from fetch_name_code(). Looks like the code is corrupted.\n");
+					exit(EXIT_FAILURE);
+					//return -3;
+			}
+			return i; //on the account of successful evaluation of the function return the next index for processing
+		}
+		else
+		{
+			printf("[error] The input expression provided to the %s function is incorrect.\n", func_name);
+			exit(EXIT_FAILURE);
+			//return 0; //unable to parse since the input given to the function is incorrect
+		}
+	}
+}
+
+//Checks whether OR not the given 'input_name' is a member of the given 'type'. 
+int fetch_name_code(char *input_name, int type)
+{
+	struct defined_name *ptr = NULL;
+	
+	//Check if the requested type of names exist
+	switch( type )
+	{
+		//constants
+		case 1 : 
+			ptr = constants;
+			break;
+		//functions
+		case 2 :
+			ptr = functions;
+			break;
+			
+		default :
+			printf("[error] Incorrect type given as input");
+			return 0;
+	}
+
+	//Loop through all the names within the given type in order to find a match for the 'input_type'
+	while( ptr->name != NULL )
+	{
+		//Once a match has been found, then return the code corresponding to it
+		if( strcmp(ptr->name, input_name) == 0 )
+			return ptr->code;
+		
+		ptr++;
+	}
+
+	//If even after looping through all the possible names there ain't no name that matches with the 'input_name' then the 'input_name' doesn't exist in the records
+	return -1; //incorrect name given as input
+	
+}
+
 
 //Check if the input operator is legal
 int is_valid_operator(char operator)

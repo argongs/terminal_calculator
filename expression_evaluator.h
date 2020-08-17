@@ -9,7 +9,7 @@ struct symbol_struct
 
 struct number
 {
-	float value;
+	double value; //to ensure higher precision in calculation 
 	int precision;
 };
 
@@ -38,6 +38,12 @@ struct stack
 	int max_len, top;
 };
 
+struct defined_name
+{
+	char *name;
+	int code;
+};
+
 int eval_expr(char*, struct number*);
 
 int infix_to_postfix(char*, struct element*, int);
@@ -51,6 +57,8 @@ int obtain_ary(char);
 int obtain_precedence(char);
 int adjust_precision(float);
 int lookup_constant(int, char*, int, struct number*);
+int lookup_function(char*, int, struct number*);
+int fetch_name_code(char*, int);
 
 int create_element_list(struct element**, int);
 void display_elements(struct element*, int);

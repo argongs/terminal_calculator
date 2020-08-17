@@ -6,13 +6,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-
+#include <math.h>
 
 //Macros
 #define MAXLINE 1000 //maximum line length for a line read from a file
 
 #define PROGRAM_NAME "compute"
-#define VERSION "1.0.1"
+#define VERSION "1.2"
 
 //Funxn prototype area 
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 			if(user_opt <= 2) //add or multiply here
 			{
 				argc -= option_index;
-				argv += option_index;	
+				argv += option_index;
 				
 				struct number result = {0,0};
 				
@@ -95,7 +95,11 @@ int main(int argc, char *argv[])
 					int return_value = adjust_precision(result.value);
 					if( return_value != -1)
 					{
-						result.precision = return_value;			
+						result.precision = return_value;
+						
+						if( result.value > -powf(10, -MAX_PRECISION) && result.value < powf(10, -MAX_PRECISION) )
+							result.value = 0;//ensures that if the result lies between -10^(-6) and 10^(-6) then it will be rounded off to 0. This will allow very small values and '-0.0' i.e. negative zero to be converted to '0.0' OR positive 0.
+						
 						printf("[info] Result : %.*f\n", result.precision, result.value);
 					//Note that usage of '*' in '.*f' allows us to make use of variable
 					//precision value. For instance, via this method we can display
@@ -285,7 +289,7 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 						{
 							if( number_status > -1 )
 							{	
-								sscanf(argv[i], "%f", &temp.value);	
+								sscanf(argv[i], "%lf", &temp.value);	
 								//record the precision of the scanned no. and adjust the precision of the result accordingly
 								temp.precision = number_status;
 							}
@@ -339,7 +343,7 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 						{
 							if( number_status != -2 )
 							{	
-								sscanf(argv[i], "%f", &temp.value);	
+								sscanf(argv[i], "%lf", &temp.value);	
 								//record the precision of the scanned no. and adjust the precision of the result accordingly
 								temp.precision = number_status;
 							}
