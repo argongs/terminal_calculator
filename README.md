@@ -63,8 +63,8 @@ Points to keep in mind :
 2. The operators are evaluated according to the following precedence rule (high to low):
    > Parenthesis \> Exponential \> Division \> Multiplication \> Addition \> Subtraction
 
-3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of *e* and Pi can be used by making 
-   use of *pi* in the expression as well as direct operation mode.
+3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of **e** and Pi can be used by making 
+   use of **pi** in the expression as well as direct operation mode.
    - In expression mode :
      * `$ ./compute pi\+e`
      * `$ ./compute '(e+pi)\*90'`
@@ -81,15 +81,16 @@ Points to keep in mind :
 4. The following functions can be directly made use of in the expression mode :
 
    i. Trigonometric functions -
-      * `sin()`, `cos()`& `tan()`
+      * `sin()` `cos()` `tan()`
       * Examples :   
-       -  `./compute 'sin(pi)+cos(pi)'`
-       -  `./compute 'tan(sin((cos(pi))))'`
+        -  `./compute 'sin(pi)+cos(pi)'`
+        -  `./compute 'tan(sin((cos(pi))))'`
 
    ii. Logarithmic functions -
-       * `log2()` `loge()` `log10()` (representing log at base 2, e and 10 respectively) 
-       * Examples :
-         - `./compute log10(100)`
-         - `./compute log2(1024)/loge(e^2)`
+       
+      * `log2()` `loge()` `log10()` (representing log at base 2, e and 10 respectively) 
+      * Examples :
+        - `./compute log10(100)`
+        - `./compute log2(1024)/loge(e^2)`
    
    Note that the trigonometric functions treat the unit of the input angles as 'radians'.  
