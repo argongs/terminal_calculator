@@ -55,19 +55,19 @@ Points to keep in mind :
   - Examples:
     * Correct usage - 
       - `$ ./compute '(1+2)'` 
-      - `$ ./compute '(1+2)\*3'`
+      - `$ ./compute '(1+2)*3'`
     * Incorrect usage -
       - `$ ./compute (1+2)`
-      - `$ ./compute (1+2)\*3`
+      - `$ ./compute (1+2)*3`
 
 2. The operators are evaluated according to the following precedence rule (high to low):
    > Parenthesis \> Exponential \> Division \> Multiplication \> Addition \> Subtraction
 
-3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of **e** and Pi can be used by making 
-   use of **pi** in the expression as well as direct operation mode.
+3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of `e` and Pi can be used by making 
+   use of `pi` in the expression as well as direct operation mode.
    - In expression mode :
-     * `$ ./compute pi\+e`
-     * `$ ./compute '(e+pi)\*90'`
+     * `$ ./compute pi+e`
+     * `$ ./compute '(e+pi)*90'`
   
    - In direct operation mode :
      * `$ ./compute -a pi ~e 1 2`
