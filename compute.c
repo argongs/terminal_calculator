@@ -86,10 +86,17 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			if( argc == 2 )
+			if( argc == 2 || (argc == 3 && is_degree_mode_set()) )
 			{
 				struct number result = {0, 0};
-				int eval_status = eval_expr(argv[1], &result);
+				int eval_status = 0;
+				
+				//If degree mode is enabled then, the third argument will be treated as the expression for evaluation
+				if(is_degree_mode_set())
+					eval_status = eval_expr(argv[2], &result);
+				else //otherwise, the second argument will be treated as the expression for evaluation
+					eval_status = eval_expr(argv[1], &result);
+				
 				if(eval_status == 2)
 				{	
 					int return_value = adjust_precision(result.value);
@@ -165,7 +172,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 	In it's absence, 'getopt()' will return '?' charachter if it cannot find an argument for argument-based-option. Note that, if 'getopt()' encounters an option charachter that is not present in the 'option' string then it will return '?'.(regardless of the presence of ':' as the first charachter in the 'option' string)
 	*/
 	  
-	const char *options = ":amhv"; 
+	const char *options = ":admhv"; 
 	//'getopt()' returns '-1' after it has scanned all the input options and thier corresponding arguments (if they exist) 
 	while(err_flg == 0 && (scanned_option = getopt(argc, argv, options)) != -1)
 	{
@@ -201,6 +208,10 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				If the option 'm' is detected along with 'a',
 				then it's an error. Hence the error flag is incremented over here.
 				*/
+				break;
+			
+			case 'd' : //for enabling degree mode
+				enable_degree_mode();
 				break;
 				
 			case 'm' :	

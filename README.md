@@ -8,7 +8,7 @@ Now let's see how you can make use of this program. The **compute** file is exec
 
 Note that you need to have [gcc](https://gcc.gnu.org/) along with [make](https://www.gnu.org/software/make/) installed on your system in order to compile **terminal_calculator**. Note the presence of the `-C` argument in the `make` command. It tells the `make` command to look for the **makefile** in the specified directory.
 
-Now let's see how to use the executable file :
+Now let's see how to use the executable file (while you are in the `terminal_calculator` directory):
 
 1. Direct operation mode :
    - Usage :
@@ -29,7 +29,11 @@ Now let's see how to use the executable file :
 2. Expression mode :
    - Usage :
      
-     `$./compute EXPRESSION`
+     `$./compute MODE EXPRESSION`
+
+   - `MODE`
+     * `-d` enable degree mode
+     * This option will force the program to change the unit of the input given to the trigonometric functions to 'degrees'. Otherwise the default unit is 'radians' for the input of trigonometric functions.
 
    - `EXPRESSION`
      * Any mathematical expression that can be created by using the supported operators.
@@ -38,6 +42,8 @@ Now let's see how to use the executable file :
    - Examples :
      * `$ ./compute 1+2`
      * `$ ./compute 1+2*3`
+     * `$ ./compute -d 'cos(45)' #equivalent to cos(45 degrees)`
+     * `$ ./compute 'cos(45)' #equivalent to cos(45 radians)`
 
 3. Information mode :
    - Usage :
@@ -52,19 +58,17 @@ Now let's see how to use the executable file :
 Points to keep in mind :
 ------------------------
 1. Parenthesis is allowed, but only in the expression mode. Use it as much as you want in that mode. However enclose the expression in quotes i.e. '', whenever you wish to make use of the parenthesis.
-  - Examples:
-    * Correct usage - 
-      - `$ ./compute '(1+2)'` 
-      - `$ ./compute '(1+2)*3'`
-    * Incorrect usage -
-      - `$ ./compute (1+2)`
-      - `$ ./compute (1+2)*3`
+     * Correct usage - 
+       - `$ ./compute '(1+2)'` 
+       - `$ ./compute '(1+2)*3'`
+     * Incorrect usage -
+       - `$ ./compute (1+2)`
+       - `$ ./compute (1+2)*3`
 
 2. The operators are evaluated according to the following precedence rule (high to low):
    > Parenthesis \> Exponential \> Division \> Multiplication \> Addition \> Subtraction
 
-3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of `e` and Pi can be used by making 
-   use of `pi` in the expression as well as direct operation mode.
+3. Euler's constant and Pi are available in ready to use format. Euler's constant can be used by making use of `e` and Pi can be used by making use of `pi` in the expression as well as direct operation mode.
    - In expression mode :
      * `$ ./compute pi+e`
      * `$ ./compute '(e+pi)*90'`
@@ -78,7 +82,15 @@ Points to keep in mind :
      Notice the presence of `~` character in the direct operation mode. What does it indicate?    
      It indicates negative sign. It's meant to be used only with the constants and that too in the direct operation mode. It helps the program to capture negative constants. Note that this character is illegal in the expression mode. There's no need to use this sign in expression mode since regular representation of minus sign i.e. `-` character works perfectly over there for both numbers as well as constants.
 
-4. The following functions can be directly made use of in the expression mode :
+4. If you wish to use negative nos. in the expression, then make sure to enclose each and every negative no. in parentheses to ensure correct evaluation. Otherwise, the program might consider your input as invalid.
+   - Correct usage -
+     * `$ ./compute '1*(-2)'`
+     * `$ ./compute 'e^(-1)'`
+   - Incorrect usage -
+     * `$ ./compute 1*-3`
+     * `$ ./compute e^-1`
+
+5. The following functions can be directly made use of in the expression mode :
 
    i. Trigonometric functions -
       * `sin()` `cos()` `tan()`

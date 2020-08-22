@@ -6,6 +6,7 @@
 #include <math.h>
 #include "expression_evaluator.h"
 
+int degree_mode = 0; //determines whether the trignometric functions will treat the unit of input angles as 'degree' OR 'radian'.
 
 const struct symbol_struct symbol_list[] = {
 	{'-', 1, 2, 1},//---|
@@ -271,9 +272,39 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 					}
 					else //if discovered a no.
 					{
-						//postfix_expr[j].is_operator = 0;
-						//postfix_expr[j].type.operand.value = data.type.operand.value;
-						postfix_expr[j] = data;
+						//To check if '+' and '-' are used as a sign instead of depicting an operator
+						
+						//In this program, '+' and '-' will be treated as a sign representation instead of being an operator, iff they are either :
+						//i.  Preceded by '(' and succeeded by a no.
+						//ii. OR they are the first charachter in the expression
+						if( i == 1 || infix_expr[i-2] == '(' )
+						{
+							//Once a symbol has been found out to be a representation of +ve/-ve sign. then assign that sign to the succeeding no. and then pop it from the 'item_stack'.
+							//Why pop it from the 'item_stack'? 
+							//Because the contents of the 'item_stack' will become part of the postfix expression. And in postfix expression, at any given index either there's an operator OR there's an operand. Hence, we can't differentiate in between a sign and an operator over there. Therefore, after assigning the sign to the succeeding no., we pop out the sign from the 'item_stack'. 
+							//But why does the program put the sign on the 'item_stack'? 
+							//Because initially every symbol is treated as a potential operator. However, once the charachter succeeding the symbol is scanned, only then we become sure of whether or not that symbol is acting as a sign OR an operator.
+							if( infix_expr[i-1] == '+' ) //positive sign
+							{	
+								postfix_expr[j] = data;
+								pop(&item_stack);						
+							}
+							else if( infix_expr[i-1] == '-' ) //negative sign
+							{	
+								postfix_expr[j].type.operand.value = (-1)*data.type.operand.value;
+								postfix_expr[j].type.operand.precision = data.type.operand.precision;
+								postfix_expr[j].is_operator = 0;
+								pop(&item_stack);
+							}
+							else
+							{
+								return_value = -1; //illegal usage of operators detected
+								break;
+							}
+						}
+						else
+							postfix_expr[j] = data;
+							
 						j++;
 					}
 					
@@ -349,7 +380,7 @@ int postfix_eval(struct element* postfix_expr, int length, struct number *result
 			if( postfix_expr[i].is_operator == 1 )
 			{
 				//If it's an 'operator', then check how many operands, does it need? For instance, if it's binary then it'll use 2 operands.
-				int ary = obtain_ary(postfix_expr[i].type.operator);
+				int ary = obtain_operator_prop(postfix_expr[i].type.operator, 1); //1 signifies 'ary' property
 				
 				//Now check whether OR not the stack has at least 'ary'
 				//items in it.
@@ -479,8 +510,8 @@ int compare(char a, char b)
 	making the code look uniform, we'll use right associativity for 
 	the rest of the operators.
 	*/
-	int a_precedence = obtain_precedence(a);
-	int b_precedence = obtain_precedence(b);
+	int a_precedence = obtain_operator_prop(a ,2); //2 indicates precedence property
+	int b_precedence = obtain_operator_prop(b, 2);
 	
 	if( a == -1 || b == -1) //incorrect operators
 	{
@@ -587,8 +618,9 @@ int parse_element(char *infix_expr, int i, struct element* data)
 		//Check if the scanned charachter belongs to one of the defined constants
 		int return_status = lookup_constant(1, infix_expr, i, &(data->type.operand));
 		
-		//Check if the scanned charachter belongs to one of the defined functions
-		return_status += lookup_function(infix_expr, i, &(data->type.operand));
+		if( return_status == 0 )
+			//Check if the scanned charachter belongs to one of the defined functions, iff the charachter was not found to be constant
+			return_status = lookup_function(infix_expr, i, &(data->type.operand));
 		
 		data->is_operator = 0;
 		return return_status;
@@ -723,7 +755,12 @@ int lookup_function(char *term, int i, struct number* no)
 			{
 				printf("[error] The input given to function %s evaluates to %.*f. And %s(%.*f) is not defined.\n", func_name, eval_result.precision, eval_result.value, func_name, eval_result.precision, eval_result.value);
 				exit(EXIT_FAILURE);
-			} 
+			}
+			
+			if( degree_mode ) //if degree mode is enabled then, the input given to the trigonometric functions should be converted to radians, since the user has given the input to these functions in the form of degrees
+			{
+				eval_result.value *= (M_PI/180); //convert degree to radians
+			}
 			
 			//Evaluate the function by using the evaluated result as input
 			switch( name_code )
@@ -845,36 +882,32 @@ int is_valid_operator(char operator)
 	return 0;
 }
 
-//Check ary value of an operator
-int obtain_ary(char operator)
+//Obtain a specific property (symbol_code, ary, precdence) of the given input charachter
+int obtain_operator_prop(char operator, int property_type)
 {
 	int i;
 	
+	//Check if the input 'operator' is a valid operator by matching it against the predefined collection of operators
 	for (i = 0; i < SYMBOL_COUNT; i += 1)
 	{
-		if( operator == symbol_list[i].symbol && symbol_list[i].symbol_code == 1)
+		//Once the match is found then return the requested property value
+		if( operator == symbol_list[i].symbol && symbol_list[i].symbol_code >= 1)
 		{
-			return symbol_list[i].ary;
+			switch( property_type )
+			{
+				case 1 : //ary
+					return symbol_list[i].ary;
+				case 2 : //precedence
+					return symbol_list[i].precedence;
+				case 3 : //symbol_code
+					return symbol_list[i].symbol_code;
+				default :
+					return -1; //if the requested property is invalid, then return -1
+			}
 		}
 	}
 	
-	return 0;
-}
-
-//Obtain precedence of an operator
-int obtain_precedence(char operator)
-{
-	int i;
-	
-	for (i = 0; i < SYMBOL_COUNT; i += 1)
-	{
-		if( operator == symbol_list[i].symbol && symbol_list[i].symbol_code == 1)
-		{
-			return symbol_list[i].precedence;
-		}
-	}
-	
-	return -1;
+	return 0; //if the input 'operator' isn't present in the predefined collection of operators then, simply exit 
 }
 
 //Calculate and return operands[1] operator operands[0] 
@@ -1005,9 +1038,15 @@ to specifically take care of extra parantheses.
 */
 int check_safety(char *infix_expr, int i)
 {
-	bool lhs = isalnum(infix_expr[i-1]) || infix_expr[i-1] == ')';
-	bool rhs = isalnum(infix_expr[i+1]) || infix_expr[i+1] == '(';  
-	if( lhs && rhs )
+	int next_index = i+1, prev_index = i-1;
+	//Conditions for 'safe' operator symbol 
+	bool correct_lhs = isalnum(infix_expr[prev_index]) || infix_expr[prev_index] == ')';
+	bool correct_rhs = isalnum(infix_expr[next_index]) || infix_expr[next_index] == '(';  
+	//COnditions for 'safe' sign symbol
+	bool exceptional_symbol = obtain_operator_prop(infix_expr[i], 2) == 1; //Obtain 'symbol_code' property of the input symbol to check whether OR not the input symbol can function as an unary operator by acting a 'sign' too.
+	bool correct_preceding_char = ( i == 0 || (i>0 && infix_expr[prev_index] == '(') ); 
+	
+	if( correct_lhs && correct_rhs || exceptional_symbol && correct_preceding_char)
 		return 1;
 	else
 		return 0;
@@ -1069,6 +1108,16 @@ int adjust_precision(float value)
 	}
 }
 
+void enable_degree_mode()
+{
+	if( degree_mode == 0 )
+		degree_mode++;
+}
+
+int is_degree_mode_set()
+{
+	return degree_mode;
+}
 
 int create_element_list(struct element **element_list, int length)
 {
