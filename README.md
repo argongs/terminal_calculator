@@ -2,7 +2,7 @@ terminal_calculator, version 1.1
 ==================================
 This program is capable of handling simple mathematical expressions. The term *simple mathematical expressions* written above refers to mathematical expressions that can be created by using real nos. and the following operators : ` - + * / ^ `. Parentheses are also supported by this program.
 
-Now let's see how you can make use of this program. The **compute** file is execution ready for debian-based systems. In case if you wish to compile it on your machine, then simply hit the `make` command on your terminal (for \*nix type systems) OR command line (for windows) :
+Now let's see how you can make use of this program. The **compute** file is execution ready for Debian-based systems. In case if you wish to compile it on your machine, then simply hit the `make` command on your terminal (for \*nix type systems) OR command line (for windows) :
 
 `$make -C ~path/to/the/location/of/terminal_calculator`
 
@@ -57,7 +57,7 @@ Now let's see how to use the executable file (while you are in the `terminal_cal
 
 Points to keep in mind :
 ------------------------
-1. Parenthesis is allowed, but only in the expression mode. Use it as much as you want in that mode. However enclose the expression in quotes i.e. '', whenever you wish to make use of the parenthesis.
+1. Parenthesis is allowed, but only in the expression mode. Use it as much as you want in that mode. However enclose the expression in quotes i.e. `''`, whenever you wish to make use of the parenthesis.
      * Correct usage - 
        - `$ ./compute '(1+2)'` 
        - `$ ./compute '(1+2)*3'`
@@ -105,4 +105,12 @@ Points to keep in mind :
         - `./compute log10(100)`
         - `./compute log2(1024)/loge(e^2)`
    
-   Note that the trigonometric functions treat the unit of the input angles as 'radians'.  
+   Note that the trigonometric functions treat the unit of the input angles as 'radians'.
+   
+6. White spaces are now allowed in the expression mode. However you need to enclose the expression inside the quotes i.e. `''`, if you wish to use white spaces in your expression. Otherwise in the absence of these characters, error will occur. Keep that in mind and then you are free to use as much spaces as you wish in your expressions. See the examples below :
+   - Correct usage :
+     * `$ ./compute '4 + 6'`
+     * `$ ./compute '1 + 2 * 3'`
+   - Incorrect usage :
+	 * `$ ./compute 4 + 6`
+     * `$ ./compute 1 + 2 * 3`

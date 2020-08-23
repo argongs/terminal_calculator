@@ -497,8 +497,8 @@ int display_usage(void)
 			printf("%s", line);
 		
 		free(line); //Don't forget to free the memory allocated to 'line'
+		fclose(read_ptr);//Close the file iff the above mentioned file existed. Otherwise, closing a file which didn't exist, will lead to segmentation fault.
 	}
 	
-	fclose(read_ptr);
 	return return_value;
 }

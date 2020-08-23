@@ -41,16 +41,31 @@ int eval_expr(char* expression, struct number* result)
 {
 	int expr_length = strlen(expression);
 	int infix_eval_status = 0, postfix_eval_status = 0;
+	//Create a new pointer and let it point to a memory location which will hold the space free expression
+	char *space_free_expr = malloc(expr_length*sizeof(char));  
 	
 	//printf("[info] Infix Expression : %s\n", expression);
 		
 	struct element *postfix_expr = NULL;
 		
-	if( !create_element_list(&postfix_expr, expr_length) )
+	if( !create_element_list(&postfix_expr, expr_length) || space_free_expr == NULL )
 		fprintf(stderr, "[error] Couldn't allocate memory for storing the postfix expression due to lack of memory.\n");
 	else
 	{	
-		infix_eval_status = infix_to_postfix(expression, postfix_expr, expr_length);
+		//Remove the white spaces from the expression
+		int i, j = 0;
+		//Scan the input expression and copy every charachter from it to the memory location pointed by 'space_free_expr' except the whitespaces. 
+		for (i = 0; i < expr_length; i += 1)
+		{
+			if(expression[i] == ' ')
+				continue;
+				
+			space_free_expr[j++] = expression[i];
+		}
+		//Put the end of string charachter at the end of the string
+		space_free_expr[j] = '\0';
+		//Give the space free expression for evaluation
+		infix_eval_status = infix_to_postfix(space_free_expr, postfix_expr, expr_length);
 		switch( infix_eval_status )
 		{
 			case	1		: //resulting postfix expression

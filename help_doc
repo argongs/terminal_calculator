@@ -81,4 +81,12 @@ $ ./compute e^-1
        ./compute log10(100)
        ./compute log2(1024)/loge(e^2)
    
-  Note that the trigonometric functions treat the unit of the input angles as 'radians' by default.  
+  Note that the trigonometric functions treat the unit of the input angles as 'radians' by default.
+
+- White spaces are now allowed in the expression mode. However you need to enclose the expression inside the quotes i.e. `''`, if you wish to use white spaces in your expression. Otherwise in the absence of these characters, error will occur. Keep that in mind and then you are free to use as much spaces as you wish in your expressions. See the examples below :
+Correct usage :
+$ ./compute '4 + 6'
+$ ./compute '1 + 2 * 3'
+Incorrect usage :
+$ ./compute 4 + 6
+     * `$ ./compute 1 + 2 * 3` 
