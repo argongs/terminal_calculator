@@ -5,6 +5,7 @@
 
 #Text files
 *.txt
+.dest_dir_addr
 
 #Temporary files
 *.*~
