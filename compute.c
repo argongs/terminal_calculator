@@ -1,5 +1,6 @@
 //C manually created libraries
 #include "expression_evaluator.h"
+#include "info_fetch.h"
 //C POSIX libraries
 #include <unistd.h> //for parsing the input options 
 #include <stdio.h>
@@ -9,32 +10,28 @@
 #include <math.h>
 
 //Macros
-#define MAXLINE 1000 //maximum line length for a line read from a file
-
-#define PROGRAM_NAME "compute"
-#define VERSION "1.1"
+#define MAXLINE 1024 //maximum line length for a line read from a file
 
 //Funxn prototype area 
 
-int eval_opt(int, char* [], int*, int*);
+int eval_opt(int, char* [], int*, int*, char*);
 int calc_value(int, char* [], struct number*, int);
 int check_number(char*);
-int display_usage(void);
 
 //argc : argument count | argv : argument vector
 int main(int argc, char *argv[])
 {
 	//printf("[info] Initially argc = %d and argv[0] = %s\n", argc, argv[0]);
-	
+	char option_arg[10];
 	int option_index = 0, user_opt = 0;
 	
-	if( eval_opt(argc, argv, &option_index, &user_opt) )
+	if( eval_opt(argc, argv, &option_index, &user_opt, option_arg) )
 	{
 		printf("[error] Incorrect usage detected.\n");
 		printf("[.....] Lemme show you how to use me mate.\n");
 		//printf("[info] Reached here with %d....\n", display_usage());
 		
-		if( display_usage() )
+		if( fetch_help("") )
 		{
 			printf("[error] Can't fetch the help document due to lack of memory. Retry after sometime\n");
 		}
@@ -67,32 +64,32 @@ int main(int argc, char *argv[])
 			{
 				switch(user_opt)
 				{
-					case 3	:	
+					case 3	://help display
 						printf("[info] Usage of 'compute':\n");
-						if( display_usage() )
+						if( fetch_help(option_arg) )
 						{
 							printf("[error] Can't fetch the help document due to lack of memory. Retry after sometime\n");
 						}
 						break;
 						
-					case 4	:	
-						printf("[info] %s version %s\n", PROGRAM_NAME, VERSION);
+					case 4	://version display
+						fetch_version();
 						break;
-						
+					
 					default	: 
-						printf("[error] Obtained user option is beyond expectations. Can't process it. Evacuating with immediate effect.\n");
+						printf("[error] Obtained user option is beyond expectations. Can't process it. Exiting with immediate effect.\n");
 				}
 			}
 		}
 		else
 		{
-			if( argc == 2 || (argc == 3 && is_degree_mode_set()) )
+			if( argc == 2 || (argc == 3 && is_angle_input_set()) )
 			{
 				struct number result = {0, 0};
 				int eval_status = 0;
 				
 				//If degree mode is enabled then, the third argument will be treated as the expression for evaluation
-				if(is_degree_mode_set())
+				if(is_angle_input_set())
 					eval_status = eval_expr(argv[2], &result);
 				else //otherwise, the second argument will be treated as the expression for evaluation
 					eval_status = eval_expr(argv[1], &result);
@@ -143,7 +140,7 @@ int main(int argc, char *argv[])
 This function evaluates the options and the corresponding given by 
 the user. If they're invalid then it will return a non zero value otherwise it will return 0.
 */
-int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
+int eval_opt(int argc, char* argv[], int* option_index, int* user_opt, char* option_arg)
 {
 	//Evaluate the input options and corresponding arguments
 	int scanned_option = 0, option_no = 0, err_flg = 0;
@@ -172,7 +169,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 	In it's absence, 'getopt()' will return '?' charachter if it cannot find an argument for argument-based-option. Note that, if 'getopt()' encounters an option charachter that is not present in the 'option' string then it will return '?'.(regardless of the presence of ':' as the first charachter in the 'option' string)
 	*/
 	  
-	const char *options = ":admhv"; 
+	const char *options = ":adh:mrv"; 
 	//'getopt()' returns '-1' after it has scanned all the input options and thier corresponding arguments (if they exist) 
 	while(err_flg == 0 && (scanned_option = getopt(argc, argv, options)) != -1)
 	{
@@ -209,11 +206,7 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				then it's an error. Hence the error flag is incremented over here.
 				*/
 				break;
-			
-			case 'd' : //for enabling degree mode
-				enable_degree_mode();
-				break;
-				
+
 			case 'm' :	
 				if(option_no == 0)
 				{	
@@ -233,24 +226,44 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				*/
 				break;
 				
-			case 'h' :	
+			case 'h' :	//for help options
 				if(option_no == 0)
 				{	
 					//printf("[info] Help!\n");
-					option_no = 3; 
+					option_no = 3;
 					//Setting option_no to '3' indicates that
 					//'help' option has been selected
+					strcpy(option_arg, optarg);
+					//copy the user's help topic to a char pointer responsible for forwarding it to the function that'll handle the help function i.e. fetch_help()
 				}
 				else
 					err_flg++;
 				break;
-				
-			case 'v' :	
+
+			case 'v' :	//for version display
 				if(option_no == 0)
 				{	
 					//printf("[info] Version!\n");
 					option_no = 4; 
 					//Setting option_no to '4' indicates that 'version' option has been selected
+				}
+				else
+					err_flg++;
+				break;
+				
+			case 'd' : //for enabling degree as unit for trigonometric function input
+				if(option_no == 0)
+				{
+					enable_angle_input(1);
+				}
+				else
+					err_flg++;
+				break;
+				
+			case 'r' : //for enabling radian as unit for trigonometric function input
+				if(option_no == 0)
+				{
+					enable_angle_input(2);
 				}
 				else
 					err_flg++;
@@ -266,8 +279,11 @@ int eval_opt(int argc, char* argv[], int* option_index, int* user_opt)
 				break;
 			
 			case ':' :
-				printf("[error] Input is required for this option to work.\n");
-				err_flg++;
+				if(option_no != 3)
+				{
+					printf("[error] Input is required for this option to work.\n");
+					err_flg++;
+				}
 				break;
 			
 			default	:	
@@ -470,35 +486,4 @@ int check_number(char* no_string)
 		
 	}
 	return precision;
-}
-
-int display_usage(void)
-{
-	FILE *read_ptr = fopen("help_doc", "r");
-	int return_value = 0;
-	
-	if(read_ptr == NULL)
-	{
-		return_value = 1;
-	}	
-	else
-	{
-		char *line = malloc(MAXLINE);
-		/*
-		malloc() allocates requested amt. of memory and hands over
-		the address of the allocated memory to 'line' pointer.
-		This allows the fgets() fn. below to easily fetch a line
-		from the file it reads(via tha 'read_ptr') and copy it 
-		to the memory location allocated to the 'line' pointer.
-		This ultimately helps to access the contents present in the
-		file (pointed to by 'read_ptr') in a line by line fashion.
-		*/
-		while(fgets(line, MAXLINE, read_ptr) != NULL)
-			printf("%s", line);
-		
-		free(line); //Don't forget to free the memory allocated to 'line'
-		fclose(read_ptr);//Close the file iff the above mentioned file existed. Otherwise, closing a file which didn't exist, will lead to segmentation fault.
-	}
-	
-	return return_value;
 }

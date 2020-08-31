@@ -6,7 +6,7 @@
 #include <math.h>
 #include "expression_evaluator.h"
 
-int degree_mode = 0; //determines whether the trignometric functions will treat the unit of input angles as 'degree' OR 'radian'.
+int angle_input = 0; //determines whether the user has supplied 'angle input' option. 
 
 const struct symbol_struct symbol_list[] = {
 	{'-', 1, 2, 1},//---|
@@ -134,7 +134,7 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 			{	
 				/*
 				Prior to pushing '(' onto the stack check whether the symbol present 
-				prior to ')' is an operator OR not. If it ain't an operator, then it's
+				prior to '(' is an operator OR not. If it ain't an operator, then it's
 				an invalid expression. For instance, consider the following:
 				Index	i-1	i ---\ This is an incorrect expression since it contains
 				Symbol	5	( ---/ '5('. Why incorrect? Because there's no operator
@@ -310,6 +310,18 @@ int infix_to_postfix(char *infix_expr, struct element *postfix_expr, int length)
 								postfix_expr[j].type.operand.precision = data.type.operand.precision;
 								postfix_expr[j].is_operator = 0;
 								pop(&item_stack);
+							}
+							else if( infix_expr[i-1] == '(' ) //presence of nested parantheses or absence of sign symbol.
+							{
+								//Eg. 
+								//Index   0 1 2 
+								//Element ( 4 ) 
+								//Over here, we can see that if a no. is discovered at i == 1, then it's possible that it can be an expression of this type too, where we have an opening paranthesis symbol right before the no. present at i == 1, instead of a sign symbol. 
+								postfix_expr[j] = data;
+								//Another eg.
+								//Index   0 1 2 3 4
+								//Element ( ( 4 ) ) 
+								//Over here, we can see that if an opening paranthesis is discovered at infix_expr[i-2] and there's also an opening paranthesis at infix_expr[i-1] then, it's possible that it can be an expression of this type too, where we have nested parantheses. 
 							}
 							else
 							{
@@ -772,7 +784,7 @@ int lookup_function(char *term, int i, struct number* no)
 				exit(EXIT_FAILURE);
 			}
 			
-			if( degree_mode ) //if degree mode is enabled then, the input given to the trigonometric functions should be converted to radians, since the user has given the input to these functions in the form of degrees
+			if( angle_input == 1 ) //if angle_input == 1, then it implies that degree unit is enabled then. Thus, the input given to the trigonometric functions should be converted from degree to radians, since the user has given the input to these functions in the form of degrees
 			{
 				eval_result.value *= (M_PI/180); //convert degree to radians
 			}
@@ -1067,7 +1079,7 @@ int check_safety(char *infix_expr, int i)
 		return 0;
 }
 
-int adjust_precision(float value)
+int adjust_precision(double value)
 {
 	char no_string[20];
 	int i = 0, zero_streak = 0;
@@ -1123,15 +1135,15 @@ int adjust_precision(float value)
 	}
 }
 
-void enable_degree_mode()
+void enable_angle_input(int unit_type)
 {
-	if( degree_mode == 0 )
-		degree_mode++;
+	if( angle_input == 0 )
+		angle_input = unit_type;
 }
 
-int is_degree_mode_set()
+int is_angle_input_set()
 {
-	return degree_mode;
+	return angle_input;
 }
 
 int create_element_list(struct element **element_list, int length)
