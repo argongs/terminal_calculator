@@ -7,8 +7,10 @@ Modes of usage :
 $ compute [options] [real numbers seperated by <space>]
 
 [options]:
- -a	Perform addition.
- -m	Perform multiplication.
+ -a	
+ Perform addition.
+ -m	
+ Perform multiplication.
 Examples :
 $ compute -a 1 -2.3 3.45 -4.567 # equivalent to 1.1-2.3+3.45-4.567
 $ compute -m 1 -2.3 4.5 # equivalent to 1*(-2.3)*4.5
@@ -18,8 +20,10 @@ $ compute -m 1 -2.3 4.5 # equivalent to 1*(-2.3)*4.5
 $ compute [angle_unit] [mathematical expression]
 
 [angle_unit]:
- -d set 'degree' as the unit of the input given to the trigonometric functions
- -r set 'radian' as the unit of the input given to the trigonometric functions
+ -d 
+ set 'degree' as the unit of the input given to the trigonometric functions
+ -r 
+ set 'radian' as the unit of the input given to the trigonometric functions
 - This option will allow toggling of the unit of the input given to the trigonometric functions. Note that the default unit is 'radians' for the input of trigonometric functions. Hence, using '-r' option or keeping [angle_unit] blank will set the unit to 'radians'. However, to change the unit to 'degrees', '-d' option is necessary.  
 Examples :
 $ compute -d 'cos(45)' #equivalent to cos(45 degrees)
@@ -37,10 +41,16 @@ $ compute 1+2*3
 $ compute [about]
 
 [about]:
- -h	Obtain the usage section and other helpful examples
- -v	Obtain version of this program
- -b	Obtain brief description of this program
+ -h [topic] 
+  Obtain help according to the input [topic]
+ -v	
+  Obtain version of this program
 
+[topic]:
+- This is a necessary argument for the help option of terminal_calculator. If you do not provide a value for [topic], then terminal_calculator will throw an error and show all the valid values for [topic] (or the valid topic names if you may).
+- To know which all topics are recognized by the help option, simply hit the `compute -h` on the terminal. Although this throws an error message, but still it gets the job done. Now this is what you call using a bug as a feature (or something closer to it)!.
+- To see the entirety of the help document, simply use 'all' as the topic name.
+>
 |
 Points to keep in mind :
 ------------------------
