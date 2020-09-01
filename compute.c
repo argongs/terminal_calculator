@@ -123,7 +123,13 @@ int main(int argc, char *argv[])
 					printf("[info] Couldn't evaluate the expression\n");
 			}
 			else if( argc < 2 )
-				printf("[error] No expression found. Please enter a mathematical expression next time for evaluation.\n");
+			{
+				printf("[error] What do you wish to with compute? If you don't know the answer to this question OR you are clueless about it's usage, then see the brief description below to understand the different ways in which you can make use of compute.\n\n");
+				if( fetch_help("modes") )
+				{
+					printf("[error] Can't fetch the help document due to lack of memory. Retry after sometime.\n");
+				}
+			}
 			else	
 				printf("[error] Found too many inputs. Only one expression is allowed in the expression mode.\n");
 		}
