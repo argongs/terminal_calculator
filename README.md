@@ -3,7 +3,7 @@ terminal_calculator, version 1.1.1
 
 Hello there wanderer! You have stumbled across terminal\_calculator, a tool for performing simple mathematical calculations directly at the terminal. Feeling bored enough to take a look? If yes, then see the gif below to see a few features of terminal\_calculator.
 
-![Oops. Looks like the gif became shy of you and ran away. Don't worry, we'll bring it back soon.](https://www.dropbox.com/s/fpz8l4ja04j0q7w/terminal_calculator.gif)
+![Oops. Looks like the gif became shy of you and ran away. Don't worry, we'll bring it back soon.](https://i.imgur.com/cBZsKkf.gif)
 
 Now if that got your eye, then maybe you wish to see more of it. If yes, then head towards one of the following of the following topics to explore more about terminal_calculator. Else, happy surfing wanderer!
 
