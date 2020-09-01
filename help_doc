@@ -11,6 +11,7 @@ $ compute [options] [real numbers seperated by <space>]
  Perform addition.
  -m	
  Perform multiplication.
+ 
 Examples :
 $ compute -a 1 -2.3 3.45 -4.567 # equivalent to 1.1-2.3+3.45-4.567
 $ compute -m 1 -2.3 4.5 # equivalent to 1*(-2.3)*4.5
@@ -24,6 +25,7 @@ $ compute [angle_unit] [mathematical expression]
  set 'degree' as the unit of the input given to the trigonometric functions
  -r 
  set 'radian' as the unit of the input given to the trigonometric functions
+ 
 - This option will allow toggling of the unit of the input given to the trigonometric functions. Note that the default unit is 'radians' for the input of trigonometric functions. Hence, using '-r' option or keeping [angle_unit] blank will set the unit to 'radians'. However, to change the unit to 'degrees', '-d' option is necessary.  
 Examples :
 $ compute -d 'cos(45)' #equivalent to cos(45 degrees)
@@ -90,24 +92,25 @@ $ compute 'e^(-1)'
 Incorrect usage -
 $ compute 1*-3
 $ compute e^-1
-
->functions
+>
+|functions
 - The following functions can be directly made use of in the expression mode :
-  i. Trigonometric functions -
 >trigonometric  
+  i. Trigonometric functions -
   - sin(), cos()& tan()
   - Examples :   
 	compute 'sin(pi)+cos(pi)'
 	compute 'tan(sin((cos(pi))))'
   - Note that the trigonometric functions treat the unit of the input angles as 'radians' by default.
 
-ii. Logarithmic functions -
 >logarithmic
+ii. Logarithmic functions -
   - log2() loge() log10() (representing log at base 2, e and 10 respectively) 
   - Examples :
     compute log10(100)
     compute log2(1024)/loge(e^2)
-   
+
+|
 >white spaces
 - White spaces are now allowed in the expression mode. However you need to enclose the expression inside the quotes i.e. `''`, if you wish to use white spaces in your expression. Otherwise in the absence of these characters, error will occur. Keep that in mind and then you are free to use as much spaces as you wish in your expressions. See the examples below :
 Correct usage :
