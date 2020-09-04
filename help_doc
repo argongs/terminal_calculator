@@ -99,16 +99,16 @@ $ compute e^-1
   i. Trigonometric functions -
   - sin(), cos()& tan()
   - Examples :   
-	compute 'sin(pi)+cos(pi)'
-	compute 'tan(sin((cos(pi))))'
+	$ compute 'sin(pi)+cos(pi)'
+	$ compute 'tan(sin((cos(pi))))'
   - Note that the trigonometric functions treat the unit of the input angles as 'radians' by default.
 
 >logarithmic
 ii. Logarithmic functions -
   - log2() loge() log10() (representing log at base 2, e and 10 respectively) 
   - Examples :
-    compute log10(100)
-    compute log2(1024)/loge(e^2)
+    $ compute 'log10(100)'
+    $ compute 'log2(1024)/loge(e^2)'
 
 |
 >white spaces
