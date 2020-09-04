@@ -680,13 +680,13 @@ int lookup_constant(int multiplier, char *term, int i, struct number* no)
 	switch( name_code )
 	{
 		case 1 : //for handling euler's constant
-			no->value = M_E;
+			no->value = multiplier*M_E;
 			no->precision = MAX_PRECISION;
 			return i; //return next_index to evaluate
 			//break;
 		
 		case 2 : //for handling the 'pi'
-			no->value = M_PI;
+			no->value = multiplier*M_PI;
 			no->precision = MAX_PRECISION;
 			return i; //return next_index to evaluate
 			//break;
