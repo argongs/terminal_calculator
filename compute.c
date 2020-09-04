@@ -374,7 +374,7 @@ int calc_value(int argc, char* argv[], struct number* result, int option_no)
 						number_status = check_number(argv[i]);
 						if( number_status != -1 )
 						{
-							if( number_status != -2 )
+							if( number_status > -1 )
 							{	
 								sscanf(argv[i], "%lf", &temp.value);	
 								//record the precision of the scanned no. and adjust the precision of the result accordingly
