@@ -840,7 +840,8 @@ int lookup_function(char *term, int i, struct number* no)
 					break;
 					
 				default :
-					printf("[error] Unexpected return value recieved from fetch_name_code(). Looks like the code is corrupted.\n");
+					//printf("[error] Unexpected return value recieved from fetch_name_code(). Looks like the code is corrupted.\n");
+					printf("[error] Cannot recognise '%s'. Hit 'compute -h constant' or 'compute -h function' to see the list of names that compute can recognise.\n", func_name);
 					exit(EXIT_FAILURE);
 					//return -3;
 			}
@@ -873,7 +874,7 @@ int fetch_name_code(char *input_name, int type)
 			break;
 			
 		default :
-			printf("[error] Incorrect type given as input");
+			printf("[error] Incorrect type given as input\n");
 			return 0;
 	}
 
