@@ -105,7 +105,7 @@ $ compute e^-1
 
 >logarithmic
 ii. Logarithmic functions -
-  - log2() loge() log10() (representing log at base 2, e and 10 respectively) 
+  - log2(), loge()& log10() (representing log at base 2, e and 10 respectively) 
   - Examples :
     $ compute 'log10(100)'
     $ compute 'log2(1024)/loge(e^2)'
